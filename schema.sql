@@ -10,6 +10,18 @@ CREATE TABLE IF NOT EXISTS users (
   ALTER TABLE users ADD COLUMN weight_kg REAL;
   ALTER TABLE users ADD COLUMN age INTEGER;
   ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'en';
+  ALTER TABLE users ADD COLUMN height_cm        REAL;
+  ALTER TABLE users ADD COLUMN weight_kg        REAL;
+  ALTER TABLE users ADD COLUMN age              INTEGER;
+  ALTER TABLE users ADD COLUMN sex              TEXT;    
+  ALTER TABLE users ADD COLUMN activity         TEXT;     
+  ALTER TABLE users ADD COLUMN goal             TEXT;    
+  ALTER TABLE users ADD COLUMN calorie_plan     TEXT;     
+  ALTER TABLE users ADD COLUMN protein_target_g INTEGER;
+  ALTER TABLE users ADD COLUMN carbs_low_g      INTEGER;
+  ALTER TABLE users ADD COLUMN carbs_high_g     INTEGER;
+  ALTER TABLE users ADD COLUMN calories_target  INTEGER;
+  
   -- Workouts (one per user per day)
   CREATE TABLE workouts (
     id INTEGER PRIMARY KEY,
@@ -55,3 +67,4 @@ CREATE TABLE IF NOT EXISTS meal_items (
   carbs REAL,
   calories INTEGER
 );
+

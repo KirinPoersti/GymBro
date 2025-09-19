@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 {% block wrap_class %}wrap--wide{% endblock %}
 {% block header %}{% endblock %}
@@ -12,21 +13,69 @@
 
 <h2 style="text-align:center; margin-bottom:12px;">Hi, {{ session['username'] }}</h2>
 
-<form method="post" class="profile-form">
-  <label> Height(cm): </label>
-  <input name="height_cm" type="number" min="0" step="1"
-       placeholder="Height (cm)"
-       value="{{ user['height_cm'] if user['height_cm'] is not none else '' }}">
+<form method="post" class="profile-form" id="profile-form">
+  <div class="grid">
+    <label> Height (cm): </label>
+    <input name="height_cm" id="height_cm" type="number" min="0" step="1"
+           placeholder="Height (cm)"
+           value="{{ user['height_cm'] if user['height_cm'] is not none else '' }}">
 
-  <label> Weight(kg): </label>
-  <input name="weight_kg" type="number" min="0" step="0.1"
-       placeholder="Weight (kg)"
-       value="{{ user['weight_kg'] if user['weight_kg'] is not none else '' }}">
+    <label> Weight (kg): </label>
+    <input name="weight_kg" id="weight_kg" type="number" min="0" step="0.1"
+           placeholder="Weight (kg)"
+           value="{{ user['weight_kg'] if user['weight_kg'] is not none else '' }}">
 
-  <label> Age(yo): </label>
-  <input name="age" type="number" min="0" step="1"
-       placeholder="Age"
-       value="{{ user['age'] if user['age'] is not none else '' }}">
+    <label> Age (years): </label>
+    <input name="age" id="age" type="number" min="0" step="1"
+           placeholder="Age"
+           value="{{ user['age'] if user['age'] is not none else '' }}">
+
+    <label> Sex: </label>
+    <select name="sex" id="sex">
+      <option value="male" {{ 'selected' if user.get('sex') == 'male' else '' }}>Male</option>
+      <option value="female" {{ 'selected' if user.get('sex') == 'female' else '' }}>Female</option>
+    </select>
+
+    <label> Activity: </label>
+    <select name="activity" id="activity">
+      {# multipliers: 1.2, 1.375, 1.55, 1.725, 1.9 #}
+      <option value="1.2"   {{ 'selected' if user.get('activity') == '1.2' else '' }}>Sedentary</option>
+      <option value="1.375" {{ 'selected' if user.get('activity') == '1.375' else '' }}>Light (1-3x/wk)</option>
+      <option value="1.55"  {{ 'selected' if user.get('activity') == '1.55' else '' }}>Moderate (3-5x/wk)</option>
+      <option value="1.725" {{ 'selected' if user.get('activity') == '1.725' else '' }}>Very (6-7x/wk)</option>
+      <option value="1.9"   {{ 'selected' if user.get('activity') == '1.9' else '' }}>Athlete/Heavy</option>
+    </select>
+
+    <label> Goal: </label>
+    <select name="goal" id="goal">
+      <option value="fat_loss" {{ 'selected' if user.get('goal') == 'fat_loss' else '' }}>Fat loss (1.0 g/kg)</option>
+      <option value="casual"   {{ 'selected' if user.get('goal') == 'casual' else '' }}>Casual mover (1.5 g/kg)</option>
+      <option value="muscle"   {{ 'selected' if user.get('goal') == 'muscle' else '' }}>Muscle build (2.2 g/kg)</option>
+    </select>
+
+    <label> Calorie plan: </label>
+    <select name="calorie_plan" id="calorie_plan">
+      <option value="maintain" {{ 'selected' if user.get('calorie_plan') == 'maintain' else '' }}>Maintain (TDEE)</option>
+      <option value="cut"      {{ 'selected' if user.get('calorie_plan') == 'cut' else '' }}>Cut (-20%)</option>
+      <option value="bulk"     {{ 'selected' if user.get('calorie_plan') == 'bulk' else '' }}>Bulk (+10%)</option>
+    </select>
+  </div>
+
+  <hr>
+
+  <div class="grid two-col">
+    <label> Preferred daily protein (g): </label>
+    <input id="protein_target_g" name="protein_target_g" type="number" step="1" readonly>
+
+    <label> Low-carb day carbs (g): </label>
+    <input id="carbs_low_g" name="carbs_low_g" type="number" step="1" readonly>
+
+    <label> High-carb day carbs (g): </label>
+    <input id="carbs_high_g" name="carbs_high_g" type="number" step="1" readonly>
+
+    <label> Estimated daily calories (kcal): </label>
+    <input id="calories_target" name="calories_target" type="number" step="1" readonly>
+  </div>
 
   <button class="btn" type="submit">Confirm</button>
 </form>
@@ -35,6 +84,101 @@
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
 .brand{font-size:34px;font-weight:400;text-decoration:none;color:#111;}
 .actions .logout{padding:8px 14px;border:1.5px solid #222;border-radius:8px;text-decoration:none;color:#111;background:#fff;}
-.profile-form input{max-width: 100px;}
+.profile-form input{max-width: 140px;}
+.profile-form select{max-width: 200px;}
+.grid{
+  display:grid;
+  grid-template-columns: 180px 1fr;
+  gap:10px 12px;
+  align-items:center;
+  max-width:560px;
+  margin:0 auto 10px;
+}
+.grid.two-col{
+  grid-template-columns: 240px 1fr;
+}
+hr{ max-width:560px; border:0; border-top:1px solid #ddd; margin:14px auto; }
 </style>
+
+<script>
+(function(){
+  const el = id => document.getElementById(id);
+
+  const fields = [
+    'height_cm','weight_kg','age','sex','activity','goal','calorie_plan',
+    'protein_target_g','carbs_low_g','carbs_high_g','calories_target'
+  ];
+  const f = Object.fromEntries(fields.map(k => [k, el(k)]));
+
+  // protein multipliers by goal
+  const PROTEIN_PER_KG = {
+    fat_loss: 1.0,
+    casual: 1.5,
+    muscle: 2.2
+  };
+
+  function toNum(v){ const n = parseFloat(v); return isFinite(n) ? n : 0; }
+
+  function computeProtein(weightKg, goal){
+    const mult = PROTEIN_PER_KG[goal] ?? 1.5;
+    return Math.round(weightKg * mult);
+  }
+
+  // Mifflin-St Jeor BMR
+  function bmr(sex, weightKg, heightCm, age){
+    // weight (kg), height (cm), age (years)
+    const base = (10 * weightKg) + (6.25 * heightCm) - (5 * age);
+    return Math.round(base + (sex === 'female' ? -161 : 5));
+  }
+
+  function tdee(bmrVal, activityMult){
+    return Math.round(bmrVal * activityMult);
+  }
+
+  function caloriesByPlan(tdeeVal, plan){
+    if(plan === 'cut')  return Math.round(tdeeVal * 0.8);  // -20%
+    if(plan === 'bulk') return Math.round(tdeeVal * 1.1);  // +10%
+    return tdeeVal; // maintain
+  }
+
+  function recompute(){
+    const weight = toNum(f.weight_kg.value);
+    const height = toNum(f.height_cm.value);
+    const age    = toNum(f.age.value);
+    const sex    = f.sex.value || 'male';
+    const activity = parseFloat(f.activity.value || '1.2');
+    const goal   = f.goal.value || 'casual';
+    const plan   = f.calorie_plan.value || 'maintain';
+
+    const protein = computeProtein(weight, goal);
+    const carbsLow  = Math.round(protein * 0.3);
+    const carbsHigh = Math.round(protein * 1.5);
+
+    const b = bmr(sex, weight, height, age);
+    const t = tdee(b, activity);
+    const cals = caloriesByPlan(t, plan);
+
+    f.protein_target_g.value = protein;
+    f.carbs_low_g.value = carbsLow;
+    f.carbs_high_g.value = carbsHigh;
+    f.calories_target.value = cals;
+  }
+
+  // wire events
+  ['height_cm','weight_kg','age','sex','activity','goal','calorie_plan'].forEach(id => {
+    el(id).addEventListener('input', recompute);
+    el(id).addEventListener('change', recompute);
+  });
+
+  // initial compute on page load
+  window.addEventListener('DOMContentLoaded', recompute);
+  recompute();
+
+  // ensure values exist before submit (readonly inputs already have name=...)
+  el('profile-form').addEventListener('submit', () => {
+    recompute();
+  });
+})();
+</script>
+
 {% endblock %}
