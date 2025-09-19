@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 style="text-align:center; margin-bottom: 18px;">{{ d }}</h2>
+
+<div class="cards">
+  <a class="card" href="{{ url_for('day_view', d=d) }}#training" onclick="go('/day/{{ d }}/training'); return false;">Training</a>
+  <a class="card" href="{{ url_for('day_view', d=d) }}#meals"    onclick="go('/day/{{ d }}/meals'); return false;">Meals</a>
+</div>
+
+<div style="text-align:center; margin-top: 14px;">
+  <a href="{{ url_for('dashboard') }}">← Back to week</a>
+</div>
+
+<script>
+function go(path){ window.location = path; }
+</script>
+
+<style>
+  .cards { display:flex; gap:14px; justify-content:center; }
+  .card {
+    display:flex; align-items:center; justify-content:center;
+    width:160px; height:90px; border:1.5px solid #222; border-radius:16px;
+    text-decoration:none; color:#111; background:#fff; font-weight:600;
+    transition: transform .05s, box-shadow .1s;
+  }
+  .card:hover { transform: translateY(-1px); box-shadow: 0 3px 12px rgba(0,0,0,.06); }
+</style>
+{% endblock %}

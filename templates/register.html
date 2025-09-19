@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="post">
+  <label>Email address:</label>
+  <input name="email" type="email" autocomplete="email">
+
+  <label>Username:</label>
+  <input name="username" autocomplete="username">
+
+  <label>Password:</label>
+  <input type="password" name="password" autocomplete="new-password">
+
+  <label>Confirm your password:</label>
+  <input type="password" name="confirm" autocomplete="new-password">
+
+  <button class="btn" type="submit">Create your account</button>
+</form>
+<a class="link" href="{{ url_for('login') }}">Already have an account? Sign in</a>
+{% endblock %}

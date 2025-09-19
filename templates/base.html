@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>GymBro</title>
+  <style>
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #fafafa;
+    background-image: radial-gradient(#ddd 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .wrap {
+    max-width: 360px;
+    margin: 48px auto;
+    background: #fff;
+    padding: 28px;
+    border-radius: 14px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.06);
+  }
+  .wrap--wide {
+  max-width: 900px;   
+  padding: 30px;      
+  }
+  h1 {
+    text-align: center;
+    margin: 0 0 20px;
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+  label {
+    margin: 8px 0 4px;
+  }
+  input {
+    width: 100%;            
+    padding: 8px 10px;
+    border: 1px solid #222;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    box-sizing: border-box;  
+  }
+  .btn {
+    align-self: center;      
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: 2px solid #222;
+    background: #fff;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 6px;
+  }
+  .link {
+    display: block;
+    text-align: center;
+    margin-top: 12px;
+    font-size: .9rem;
+  }
+  .flash {
+    background:#fff2c0;
+    border:1px solid #e5c75e;
+    padding:8px 10px;
+    border-radius:8px;
+    margin:10px 0;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap {% block wrap_class %}{% endblock %}">
+    <h1>GymBro</h1>
+    {% for m in get_flashed_messages() %}
+      <div class="flash">{{ m }}</div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

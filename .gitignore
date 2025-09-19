@@ -1,0 +1,6 @@
+__pycache__
+venv
+codex
+*.pyc
+database.db
+.env
