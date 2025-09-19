@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import db
 from datetime import date, timedelta
 import calendar
+from math import isfinite
 
 app = Flask(__name__)
 app.secret_key = "change-me-in-production"  # put in .env later
@@ -31,6 +32,46 @@ def get_or_create_workout(uid, d):
         db.execute("INSERT INTO workouts (user_id, wdate) VALUES (?, ?)", (uid, d))
         w = db.query_one("SELECT * FROM workouts WHERE user_id=? AND wdate=?", (uid, d))
     return w
+
+def _to_float(x, default=None):
+    try:
+        v = float(str(x))
+        return v if isfinite(v) else default
+    except Exception:
+        return default
+
+def _to_int(x, default=None):
+    try:
+        return int(float(str(x)))
+    except Exception:
+        return default
+
+def compute_calories_and_macros(weight_kg, height_cm, age, sex, activity_factor, goal, calorie_plan):
+    # BMR - Mifflin–St Jeor
+    if None in (weight_kg, height_cm, age) or sex not in ("male", "female") or activity_factor is None:
+        return None, None, None, None
+    bmr = 10 * weight_kg + 6.25 * height_cm - 5 * age + (5 if sex == "male" else -161)
+    tdee = round(bmr * activity_factor)
+
+    # apply calorie plan
+    if calorie_plan == "cut":
+        calories = round(tdee * 0.80)
+    elif calorie_plan == "bulk":
+        calories = round(tdee * 1.10)
+    else:
+        calories = tdee
+
+    # protein target (g)
+    perkg = {"fat_loss": 1.0, "casual": 1.5, "muscle": 2.2}.get(goal, 1.5)
+    protein_g = round(perkg * weight_kg)
+
+    # simplistic carb split: leftover calories after protein, low/high split 30/60%
+    calories_after_protein = max(0, calories - protein_g * 4)
+    carbs_low_g  = round((calories_after_protein * 0.30) / 4)
+    carbs_high_g = round((calories_after_protein * 0.60) / 4)
+
+    return calories, protein_g, carbs_low_g, carbs_high_g
+
 
 # ---------- Register ----------
 @app.route("/register", methods=["GET", "POST"])
@@ -147,44 +188,66 @@ def dashboard():
 @app.route("/profile", methods=["GET", "POST"])
 def profile():
     if (r := require_auth()): return r
-
     uid = session["user_id"]
 
     if request.method == "POST":
         # fetch current values first
         current = db.query_one(
-            "SELECT height_cm, weight_kg, age FROM users WHERE id = ?",
+            "SELECT height_cm, weight_kg, age, sex, activity, goal, calorie_plan FROM users WHERE id = ?",
             (uid,)
-        )
+        ) or {}
 
-        def keep_or_cast(field, caster):
+        def keep_or_cast(field, caster, default_key=None):
             raw = request.form.get(field, "").strip()
-            if raw == "":                      # nothing typed → keep old value
-                return current[field]
+            if raw == "":
+                return current.get(default_key or field)
             try:
-                raw = raw.replace(",", ".")    # allow 70,5 etc.
+                raw = raw.replace(",", ".")
                 return caster(raw)
             except Exception:
-                # invalid input → also keep old value
-                return current[field]
+                return current.get(default_key or field)
 
         h = keep_or_cast("height_cm", int)
         w = keep_or_cast("weight_kg", float)
         a = keep_or_cast("age", int)
 
-        db.execute(
-            "UPDATE users SET height_cm = ?, weight_kg = ?, age = ? WHERE id = ?",
-            (h, w, a, uid)
+        # new fields from the template (strings)
+        sex = request.form.get("sex") or current.get("sex") or "male"
+        activity = request.form.get("activity") or current.get("activity") or "1.55"
+        goal = request.form.get("goal") or current.get("goal") or "casual"
+        calorie_plan = request.form.get("calorie_plan") or current.get("calorie_plan") or "maintain"
+
+        # cast activity to float (template uses strings like "1.55")
+        activity_f = _to_float(activity, None)
+
+        # compute derived values on server — ignore any submitted derived fields
+        calories, protein_g, carbs_low_g, carbs_high_g = compute_calories_and_macros(
+            weight_kg=w, height_cm=h, age=a,
+            sex=sex, activity_factor=activity_f,
+            goal=goal, calorie_plan=calorie_plan
         )
+
+        # Update user record — include both preferences and computed targets
+        db.execute(
+            """UPDATE users
+               SET height_cm = ?, weight_kg = ?, age = ?,
+                   sex = ?, activity = ?, goal = ?, calorie_plan = ?,
+                   calories_target = ?, protein_target_g = ?, carbs_low_g = ?, carbs_high_g = ?
+               WHERE id = ?""",
+            (h, w, a, sex, str(activity), goal, calorie_plan,
+             calories, protein_g, carbs_low_g, carbs_high_g, uid)
+        )
+
         flash("Profile updated.")
         return redirect(url_for("profile"))
 
+    # GET: fetch all fields used by template
     user = db.query_one(
-        "SELECT username, height_cm, weight_kg, age FROM users WHERE id = ?",
+        "SELECT username, height_cm, weight_kg, age, sex, activity, goal, calorie_plan, "
+        "calories_target, protein_target_g, carbs_low_g, carbs_high_g FROM users WHERE id = ?",
         (uid,)
     )
     return render_template("profile.html", user=user)
-
 
 # -------- Settings menu --------
 @app.route("/settings")

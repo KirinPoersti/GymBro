@@ -1,70 +1,71 @@
 PRAGMA foreign_keys = ON;
 
+-- Users table with profile fields
 CREATE TABLE IF NOT EXISTS users (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  email         TEXT UNIQUE NOT NULL,
-  username      TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
-  created_at    TEXT DEFAULT (datetime('now'))
-  ALTER TABLE users ADD COLUMN height_cm INTEGER;
-  ALTER TABLE users ADD COLUMN weight_kg REAL;
-  ALTER TABLE users ADD COLUMN age INTEGER;
-  ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'en';
-  ALTER TABLE users ADD COLUMN height_cm        REAL;
-  ALTER TABLE users ADD COLUMN weight_kg        REAL;
-  ALTER TABLE users ADD COLUMN age              INTEGER;
-  ALTER TABLE users ADD COLUMN sex              TEXT;    
-  ALTER TABLE users ADD COLUMN activity         TEXT;     
-  ALTER TABLE users ADD COLUMN goal             TEXT;    
-  ALTER TABLE users ADD COLUMN calorie_plan     TEXT;     
-  ALTER TABLE users ADD COLUMN protein_target_g INTEGER;
-  ALTER TABLE users ADD COLUMN carbs_low_g      INTEGER;
-  ALTER TABLE users ADD COLUMN carbs_high_g     INTEGER;
-  ALTER TABLE users ADD COLUMN calories_target  INTEGER;
-  
-  -- Workouts (one per user per day)
-  CREATE TABLE workouts (
-    id INTEGER PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    wdate TEXT NOT NULL,              
-    created_at TEXT DEFAULT (datetime('now')),
-    UNIQUE(user_id, wdate)
-  );
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  email           TEXT UNIQUE NOT NULL,
+  username        TEXT UNIQUE NOT NULL,
+  password_hash   TEXT NOT NULL,
+  created_at      TEXT DEFAULT (datetime('now')),
 
-  CREATE TABLE exercises (
-    id INTEGER PRIMARY KEY,
-    workout_id INTEGER NOT NULL,
-    name TEXT NOT NULL,
-    ord INTEGER DEFAULT 0
-  );
+  -- profile fields
+  language        TEXT DEFAULT 'en',
+  height_cm       REAL,
+  weight_kg       REAL,
+  age             INTEGER,
+  sex             TEXT,      -- 'male' | 'female'
+  activity        TEXT,      -- activity multiplier as string (e.g. "1.55")
+  goal            TEXT,      -- 'fat_loss' | 'casual' | 'muscle'
+  calorie_plan    TEXT,      -- 'maintain' | 'cut' | 'bulk'
+  protein_target_g INTEGER,
+  carbs_low_g      INTEGER,
+  carbs_high_g     INTEGER,
+  calories_target  INTEGER
+);
 
-  CREATE TABLE sets (
-    id INTEGER PRIMARY KEY,
-    exercise_id INTEGER NOT NULL,
-    set_no INTEGER NOT NULL,
-    reps INTEGER,
-    weight REAL
-  );
+-- Workouts (one per user per day)
+CREATE TABLE IF NOT EXISTS workouts (
+  id         INTEGER PRIMARY KEY,
+  user_id    INTEGER NOT NULL,
+  wdate      TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(user_id, wdate)
+);
 
-  -- Meals
-  CREATE TABLE IF NOT EXISTS meal_days (
-  id INTEGER PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS exercises (
+  id         INTEGER PRIMARY KEY,
+  workout_id INTEGER NOT NULL,
+  name       TEXT NOT NULL,
+  ord        INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS sets (
+  id          INTEGER PRIMARY KEY,
+  exercise_id INTEGER NOT NULL,
+  set_no      INTEGER NOT NULL,
+  reps        INTEGER,
+  weight      REAL
+);
+
+-- Meals
+CREATE TABLE IF NOT EXISTS meal_days (
+  id      INTEGER PRIMARY KEY,
   user_id INTEGER NOT NULL,
-  d TEXT NOT NULL
+  d       TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS meals (
-  id INTEGER PRIMARY KEY,
+  id     INTEGER PRIMARY KEY,
   day_id INTEGER NOT NULL,
-  name TEXT,
-  ord INTEGER DEFAULT 0
+  name   TEXT,
+  ord    INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS meal_items (
-  id INTEGER PRIMARY KEY,
-  meal_id INTEGER NOT NULL,
-  protein REAL,
-  carbs REAL,
+  id       INTEGER PRIMARY KEY,
+  meal_id  INTEGER NOT NULL,
+  name     TEXT,     -- added so food items can have a name
+  protein  REAL,
+  carbs    REAL,
   calories INTEGER
 );
-
