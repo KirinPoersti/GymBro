@@ -23,7 +23,6 @@ Create the database tables and add initial data:
 
 ```
 $ sqlite3 database.db < schema.sql
-$ sqlite3 database.db < init.sql
 ```
 
 Run the application:
@@ -37,7 +36,6 @@ $ flask run
 * **Backend:** Python (Flask)  
 * **Database:** SQLite for development (PostgreSQL/MySQL recommended for production)  
 * **Interface:** Browser-based web app  
-* **Future Extensions:** React frontend, JWT authentication, Docker deployment  
 
 ---
 

@@ -13,10 +13,10 @@ CREATE TABLE IF NOT EXISTS users (
   height_cm       REAL,
   weight_kg       REAL,
   age             INTEGER,
-  sex             TEXT,      -- 'male' | 'female'
-  activity        TEXT,      -- activity multiplier as string (e.g. "1.55")
-  goal            TEXT,      -- 'fat_loss' | 'casual' | 'muscle'
-  calorie_plan    TEXT,      -- 'maintain' | 'cut' | 'bulk'
+  sex             TEXT,      
+  activity        TEXT,      
+  goal            TEXT,     
+  calorie_plan    TEXT,    
   protein_target_g INTEGER,
   carbs_low_g      INTEGER,
   carbs_high_g     INTEGER,
@@ -64,8 +64,7 @@ CREATE TABLE IF NOT EXISTS meals (
 CREATE TABLE IF NOT EXISTS meal_items (
   id       INTEGER PRIMARY KEY,
   meal_id  INTEGER NOT NULL,
-  name     TEXT,     -- added so food items can have a name
-  protein  REAL,
+  name     TEXT,     
   carbs    REAL,
   calories INTEGER
 );
