@@ -75,7 +75,7 @@
 
     .global-topbar {
       display: flex;
-      justify-content: space-between; /* back on left, home on right */
+      justify-content: space-between; 
       align-items: center;
       margin-bottom: 16px;
     }
@@ -99,7 +99,7 @@
 <body>
   <div class="wrap {% block wrap_class %}{% endblock %}">
     {% block header %}
-      <h1 class="title">GymBro</h1>   <!-- default centered title -->
+      <h1 class="title">GymBro</h1>  
     {% endblock %}
     
     {% set on_dashboard = request.endpoint == 'dashboard' %}

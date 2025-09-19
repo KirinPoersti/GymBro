@@ -6,7 +6,7 @@ import calendar
 from math import isfinite
 
 app = Flask(__name__)
-app.secret_key = "change-me-in-production"  # put in .env later
+app.secret_key = "change-me-in-production"  
 
 @app.route("/")
 def home():
@@ -54,13 +54,11 @@ def _valid_iso_date(s: str) -> bool:
         return False
 
 def compute_calories_and_macros(weight_kg, height_cm, age, sex, activity_factor, goal, calorie_plan):
-    # BMR - Mifflin–St Jeor
     if None in (weight_kg, height_cm, age) or sex not in ("male", "female") or activity_factor is None:
         return None, None, None, None
     bmr = 10 * weight_kg + 6.25 * height_cm - 5 * age + (5 if sex == "male" else -161)
     tdee = round(bmr * activity_factor)
 
-    # apply calorie plan
     if calorie_plan == "cut":
         calories = round(tdee * 0.80)
     elif calorie_plan == "bulk":
@@ -68,11 +66,9 @@ def compute_calories_and_macros(weight_kg, height_cm, age, sex, activity_factor,
     else:
         calories = tdee
 
-    # protein target (g)
     perkg = {"fat_loss": 1.0, "casual": 1.5, "muscle": 2.2}.get(goal, 1.5)
     protein_g = round(perkg * weight_kg)
 
-    # simplistic carb split: leftover calories after protein, low/high split 30/60%
     calories_after_protein = max(0, calories - protein_g * 4)
     carbs_low_g  = round((calories_after_protein * 0.30) / 4)
     carbs_high_g = round((calories_after_protein * 0.60) / 4)
@@ -151,16 +147,15 @@ def day_view(d):
         return redirect(url_for("login"))
     try:
         y, m, dd = map(int, d.split("-"))
-        _ = date(y, m, dd)  # validate
+        _ = date(y, m, dd) 
     except Exception:
         abort(404)
     return render_template("day.html", d=d)
 
 def month_grid(year:int, month:int):
     """42 dates (6 rows * 7 cols) starting on Monday for the given month."""
-    cal = calendar.Calendar(firstweekday=0)  # 0=Monday
+    cal = calendar.Calendar(firstweekday=0)  
     days = list(cal.itermonthdates(year, month))
-    # ensure exactly 42 cells
     if len(days) < 42:
       days += [days[-1] + timedelta(days=i+1) for i in range(42 - len(days))]
     return days[:42]
@@ -176,13 +171,11 @@ def dashboard():
 
     grid = month_grid(y, m)
 
-    # prev/next month
     if m == 1:  prev_y, prev_m = y-1, 12
     else:       prev_y, prev_m = y, m-1
     if m == 12: next_y, next_m = y+1, 1
     else:       next_y, next_m = y, m+1
 
-    # --- NEW: low/high-carb coloring sets ---
     uid = session["user_id"]
     user_row = db.query_one("SELECT low_carb_start FROM users WHERE id=?", (uid,))
     lowcarb_dates, highcarb_dates = set(), set()
@@ -195,13 +188,12 @@ def dashboard():
                 if delta >= 0:
                     r = delta % 5
                     if 0 <= r <= 3:
-                        lowcarb_dates.add(d.isoformat())   # 4 days blue
+                        lowcarb_dates.add(d.isoformat())   
                     elif r == 4:
-                        highcarb_dates.add(d.isoformat())  # 5th day green
+                        highcarb_dates.add(d.isoformat())  
         except ValueError:
-            pass  # ignore bad stored value
+            pass  
 
-    # --- (optional) workout ticks for the grid range ---
     start_iso, end_iso = grid[0].isoformat(), grid[-1].isoformat()
     rows = db.query(
         "SELECT wdate FROM workouts WHERE user_id=? AND wdate BETWEEN ? AND ?",
@@ -226,7 +218,6 @@ def profile():
     uid = session["user_id"]
 
     if request.method == "POST":
-        # fetch current values first (added low_carb_start)
         current = db.query_one(
             "SELECT height_cm, weight_kg, age, sex, activity, goal, calorie_plan, low_carb_start "
             "FROM users WHERE id = ?",
@@ -247,30 +238,25 @@ def profile():
         w = keep_or_cast("weight_kg", float)
         a = keep_or_cast("age", int)
 
-        # strings
         sex = request.form.get("sex") or current.get("sex") or "male"
         activity = request.form.get("activity") or current.get("activity") or "1.55"
         goal = request.form.get("goal") or current.get("goal") or "casual"
         calorie_plan = request.form.get("calorie_plan") or current.get("calorie_plan") or "maintain"
 
-        # NEW: low-carb start date (YYYY-MM-DD), keep old if blank/invalid
         raw_start = (request.form.get("low_carb_start") or "").strip()
         if raw_start and _valid_iso_date(raw_start):
             low_carb_start = raw_start
         else:
             low_carb_start = current.get("low_carb_start")
 
-        # cast activity to float (template uses strings like "1.55")
         activity_f = _to_float(activity, None)
 
-        # compute derived values (server-authoritative)
         calories, protein_g, carbs_low_g, carbs_high_g = compute_calories_and_macros(
             weight_kg=w, height_cm=h, age=a,
             sex=sex, activity_factor=activity_f,
             goal=goal, calorie_plan=calorie_plan
         )
 
-        # Update user record — added low_carb_start
         db.execute(
             """UPDATE users
                SET height_cm = ?, weight_kg = ?, age = ?,
@@ -286,7 +272,6 @@ def profile():
         flash("Profile updated.")
         return redirect(url_for("profile"))
 
-    # GET: include low_carb_start so the date input is prefilled
     user = db.query_one(
         "SELECT username, height_cm, weight_kg, age, sex, activity, goal, calorie_plan, "
         "low_carb_start, calories_target, protein_target_g, carbs_low_g, carbs_high_g "
@@ -313,7 +298,6 @@ def settings_username():
         if not new_name:
             flash("Username cannot be empty.")
             return redirect(url_for("settings_username"))
-        # ensure unique
         exists = db.query_one("SELECT id FROM users WHERE username = ? AND id != ?", (new_name, uid))
         if exists:
             flash("Username already taken.")
@@ -380,14 +364,12 @@ def get_or_create_workout(uid, d):
         w = db.query_one("SELECT * FROM workouts WHERE user_id=? AND wdate=?", (uid, d))
     return w
 
-# -------- Training session --------
 @app.route("/day/<d>/training", methods=["GET", "POST"])
 def training(d):
     if "user_id" not in session:
         return redirect(url_for("login"))
     uid = session["user_id"]
 
-    # validate date
     try:
         y, m, dd = (int(x) for x in d.split("-"))
         _ = date(y, m, dd)
@@ -400,13 +382,12 @@ def training(d):
 
         w = get_or_create_workout(uid, d)
 
-        # wipe & replace for v1
         db.execute("DELETE FROM sets WHERE exercise_id IN (SELECT id FROM exercises WHERE workout_id=?)", (w["id"],))
         db.execute("DELETE FROM exercises WHERE workout_id=?", (w["id"],))
 
         for idx, ex in enumerate(exercises):
             name = (ex.get("name") or "").strip()
-            if not name and not ex.get("sets"):  # skip empty rows
+            if not name and not ex.get("sets"):  
                 continue
 
             db.execute("INSERT INTO exercises (workout_id, name, ord) VALUES (?, ?, ?)",
@@ -429,7 +410,6 @@ def training(d):
             return jsonify({"ok": True})
         return redirect(url_for("training", d=d), code=303)
 
-    # GET
     w = db.query_one("SELECT * FROM workouts WHERE user_id=? AND wdate=?", (uid, d))
     exercises_payload = []
     if w:
@@ -451,7 +431,6 @@ def meals_view(d):
         return redirect(url_for("login"))
     uid = session["user_id"]
 
-    # validate date (YYYY-MM-DD)
     from datetime import date as _d
     try:
         y, m, dd = map(int, d.split("-"))
@@ -463,13 +442,11 @@ def meals_view(d):
         data = request.get_json(silent=True) or {}
         meals = data.get("meals", [])
 
-        # ensure a day row exists (or similar to workouts)
         day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
         if not day:
             db.execute("INSERT INTO meal_days (user_id, d) VALUES (?, ?)", (uid, d))
             day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
 
-        # wipe + replace
         db.execute("DELETE FROM meal_items WHERE meal_id IN (SELECT id FROM meals WHERE day_id=?)", (day["id"],))
         db.execute("DELETE FROM meals WHERE day_id=?", (day["id"],))
 
@@ -485,7 +462,6 @@ def meals_view(d):
                            (meal_id, p, c, k))
         return jsonify({"ok": True})
 
-    # GET: load
     day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
     meals = []
     if day:
