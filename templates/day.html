@@ -7,10 +7,6 @@
   <a class="card" href="{{ url_for('day_view', d=d) }}#meals"    onclick="go('/day/{{ d }}/meals'); return false;">Meals</a>
 </div>
 
-<div style="text-align:center; margin-top: 14px;">
-  <a href="{{ url_for('dashboard') }}">← Back to week</a>
-</div>
-
 <script>
 function go(path){ window.location = path; }
 </script>

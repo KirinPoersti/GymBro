@@ -6,4 +6,49 @@ CREATE TABLE IF NOT EXISTS users (
   username      TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   created_at    TEXT DEFAULT (datetime('now'))
+  ALTER TABLE users ADD COLUMN height_cm INTEGER;
+  ALTER TABLE users ADD COLUMN weight_kg REAL;
+  ALTER TABLE users ADD COLUMN age INTEGER;
+  ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'en';
+  -- Workouts (one per user per day)
+  CREATE TABLE workouts (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    wdate TEXT NOT NULL,              -- 'YYYY-MM-DD'
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, wdate)
+  );
+
+  CREATE TABLE exercises (
+    id INTEGER PRIMARY KEY,
+    workout_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    ord INTEGER DEFAULT 0
+  );
+
+  CREATE TABLE sets (
+    id INTEGER PRIMARY KEY,
+    exercise_id INTEGER NOT NULL,
+    set_no INTEGER NOT NULL,
+    reps INTEGER,
+    weight REAL
+  );
+
+  -- Meals
+  CREATE TABLE meals (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    mdate TEXT NOT NULL,              -- 'YYYY-MM-DD'
+    label TEXT,                       -- e.g. Breakfast / Lunch / High Carb / etc.
+    ord INTEGER DEFAULT 0
+  );
+
+  CREATE TABLE meal_items (
+    id INTEGER PRIMARY KEY,
+    meal_id INTEGER NOT NULL,
+    food TEXT NOT NULL,
+    protein REAL DEFAULT 0,
+    carbs REAL DEFAULT 0,
+    calories REAL DEFAULT 0
+  );
 );

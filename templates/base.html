@@ -72,6 +72,29 @@
       border-radius:8px;
       margin:10px 0;
     }
+
+    .global-topbar {
+      display: flex;
+      justify-content: space-between; /* back on left, home on right */
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .nav-btn {
+      font-family: "Helvetica Neue";
+      font-size: 14px;
+      padding: 6px 12px;
+      border: 1.5px solid #222;
+      border-radius: 8px;
+      background: #fff;
+      color: #111;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .nav-btn:hover {
+      background: #f5f5f5;
+    }
   </style>
 </head>
 <body>
@@ -79,6 +102,16 @@
     {% block header %}
       <h1 class="title">GymBro</h1>   <!-- default centered title -->
     {% endblock %}
+    
+    {% set on_dashboard = request.endpoint == 'dashboard' %}
+  <div class="global-topbar">
+    {% if not on_dashboard %}
+      <button class="nav-btn" onclick="history.back()">← Back</button>
+    {% else %}
+      <span></span>  {# spacer to keep Home aligned right #}
+    {% endif %}
+    <a class="nav-btn" href="{{ url_for('dashboard') }}">🏠 Home</a>
+  </div>
 
     {% for m in get_flashed_messages() %}
       <div class="flash">{{ m }}</div>

@@ -10,8 +10,8 @@
     <div class="welcome">Hi, {{ session['username'] }} 👋</div>
   </div>
   <div class="actions">
-    <a class="icon-btn" title="Profile" href="{{ url_for('dashboard') }}#profile">👤</a>
-    <a class="icon-btn" title="Settings" href="{{ url_for('dashboard') }}#settings">⚙️</a>
+    <a class="icon-btn" title="Profile" href="{{ url_for('profile') }}">👤</a>
+    <a class="icon-btn" title="Settings" href="{{ url_for('settings') }}">⚙️</a>
     <a class="logout" href="{{ url_for('logout') }}">Logout</a>
   </div>
 </div>
@@ -25,7 +25,7 @@
 
 <!-- Weekday headers -->
 <div class="wkhdr">
-  {% for n in ["MA","TI","KE","TO","PE","LA","SU"] %}
+  {% for n in ["MON","TUE","WED","THU","FRI","SAT","SUN"] %}
     <div class="cell head">{{ n }}</div>
   {% endfor %}
 </div>

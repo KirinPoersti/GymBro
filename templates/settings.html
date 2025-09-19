@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block header %}{% endblock %}
+{% block content %}
+<h1 class="title">Settings</h1>
+<div class="stack">
+  <a class="block" href="{{ url_for('settings_username') }}">Change username</a>
+  <a class="block" href="{{ url_for('settings_password') }}">Change password</a>
+  <a class="block" href="{{ url_for('settings_language') }}">Language</a>
+  <form method="post" action="{{ url_for('settings_delete') }}" onsubmit="return confirm('Delete account? This cannot be undone.');">
+    <button class="block danger" type="submit">Delete account</button>
+  </form>
+</div>
+<style>
+.stack{display:flex;flex-direction:column;gap:14px;max-width:420px;margin:0 auto;}
+.block{display:block;text-align:center;padding:14px;border:1.5px solid #222;border-radius:12px;background:#fff;color:#111;text-decoration:none;}
+.block.danger{border-color:#c02626;color:#c02626;}
+.block.danger:hover{background:#fff1f1;}
+</style>
+{% endblock %}

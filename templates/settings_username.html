@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block header %}{% endblock %}
+{% block content %}
+<h1 class="title">Change username</h1>
+<form method="post">
+  <label>Current username</label>
+  <input value="{{ current }}" disabled>
+  <label>New username</label>
+  <input name="new_username" required>
+  <button class="btn" type="submit">Confirm</button>
+</form>
+{% endblock %}
