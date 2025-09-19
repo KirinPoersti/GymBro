@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
   CREATE TABLE workouts (
     id INTEGER PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    wdate TEXT NOT NULL,              -- 'YYYY-MM-DD'
+    wdate TEXT NOT NULL,              
     created_at TEXT DEFAULT (datetime('now')),
     UNIQUE(user_id, wdate)
   );
@@ -35,20 +35,23 @@ CREATE TABLE IF NOT EXISTS users (
   );
 
   -- Meals
-  CREATE TABLE meals (
-    id INTEGER PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    mdate TEXT NOT NULL,              -- 'YYYY-MM-DD'
-    label TEXT,                       -- e.g. Breakfast / Lunch / High Carb / etc.
-    ord INTEGER DEFAULT 0
-  );
+  CREATE TABLE IF NOT EXISTS meal_days (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  d TEXT NOT NULL
+);
 
-  CREATE TABLE meal_items (
-    id INTEGER PRIMARY KEY,
-    meal_id INTEGER NOT NULL,
-    food TEXT NOT NULL,
-    protein REAL DEFAULT 0,
-    carbs REAL DEFAULT 0,
-    calories REAL DEFAULT 0
-  );
+CREATE TABLE IF NOT EXISTS meals (
+  id INTEGER PRIMARY KEY,
+  day_id INTEGER NOT NULL,
+  name TEXT,
+  ord INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS meal_items (
+  id INTEGER PRIMARY KEY,
+  meal_id INTEGER NOT NULL,
+  protein REAL,
+  carbs REAL,
+  calories INTEGER
 );

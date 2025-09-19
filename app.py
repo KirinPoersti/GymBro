@@ -335,41 +335,54 @@ def training(d):
 
     return render_template("training.html", d=d, exercises=exercises_payload)
 # -------- Meal --------
-@app.route("/day/<d>/meals", methods=["GET","POST"])
-def meals(d):
-    if not session.get("user_id"): return redirect(url_for("login"))
+@app.route("/day/<d>/meals", methods=["GET", "POST"])
+def meals_view(d):
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
     uid = session["user_id"]
 
-    try: y,m,dd = [int(x) for x in d.split("-")]; _ = date(y,m,dd)
-    except: abort(404)
+    # validate date (YYYY-MM-DD)
+    from datetime import date as _d
+    try:
+        y, m, dd = map(int, d.split("-"))
+        _ = _d(y, m, dd)
+    except Exception:
+        abort(404)
 
     if request.method == "POST":
         data = request.get_json(silent=True) or {}
-        meals_payload = data.get("meals", [])  # [{label, items:[{food,protein,carbs,calories}]}]
+        meals = data.get("meals", [])
 
-        # wipe & replace for simplicity
-        db.execute("DELETE FROM meal_items WHERE meal_id IN (SELECT id FROM meals WHERE user_id=? AND mdate=?)", (uid, d))
-        db.execute("DELETE FROM meals WHERE user_id=? AND mdate=?", (uid, d))
+        # ensure a day row exists (or similar to workouts)
+        day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
+        if not day:
+            db.execute("INSERT INTO meal_days (user_id, d) VALUES (?, ?)", (uid, d))
+            day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
 
-        for idx, mobj in enumerate(meals_payload):
-            label = (mobj.get("label") or "").strip() or f"Meal {idx+1}"
-            db.execute("INSERT INTO meals (user_id, mdate, label, ord) VALUES (?, ?, ?, ?)", (uid, d, label, idx))
-            meal_id = db.query_one("SELECT id FROM meals WHERE user_id=? AND mdate=? AND ord=?", (uid, d, idx))["id"]
-            for it in mobj.get("items", []):
-                food = (it.get("food") or "").strip() or "Item"
-                p = float(str(it.get("protein") or 0).replace(",", "."))
-                c = float(str(it.get("carbs") or 0).replace(",", "."))
-                k = float(str(it.get("calories") or 0).replace(",", "."))
-                db.execute("INSERT INTO meal_items (meal_id, food, protein, carbs, calories) VALUES (?, ?, ?, ?, ?)", (meal_id, food, p, c, k))
+        # wipe + replace
+        db.execute("DELETE FROM meal_items WHERE meal_id IN (SELECT id FROM meals WHERE day_id=?)", (day["id"],))
+        db.execute("DELETE FROM meals WHERE day_id=?", (day["id"],))
+
+        for i, meal in enumerate(meals):
+            name = (meal.get("name") or "").strip()
+            db.execute("INSERT INTO meals (day_id, name, ord) VALUES (?, ?, ?)", (day["id"], name, i))
+            meal_id = db.query_one("SELECT id FROM meals WHERE day_id=? AND ord=?", (day["id"], i))["id"]
+            for it in meal.get("items", []):
+                p = float(it.get("protein") or 0)
+                c = float(it.get("carbs") or 0)
+                k = int(float(it.get("calories") or 0))
+                db.execute("INSERT INTO meal_items (meal_id, protein, carbs, calories) VALUES (?,?,?,?)",
+                           (meal_id, p, c, k))
         return jsonify({"ok": True})
 
-    # GET: load current
-    ms = db.query("SELECT * FROM meals WHERE user_id=? AND mdate=? ORDER BY ord", (uid, d))
-    meals_list = []
-    for mrow in ms:
-        items = db.query("SELECT * FROM meal_items WHERE meal_id=? ORDER BY id", (mrow["id"],))
-        meals_list.append({"label": mrow["label"], "items": [{"food": i["food"], "protein": i["protein"], "carbs": i["carbs"], "calories": i["calories"]} for i in items]})
-    return render_template("meals.html", d=d, meals=meals_list)
+    # GET: load
+    day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
+    meals = []
+    if day:
+        for m in db.query("SELECT id, name FROM meals WHERE day_id=? ORDER BY ord", (day["id"],)):
+            items = db.query("SELECT protein, carbs, calories FROM meal_items WHERE meal_id=?", (m["id"],))
+            meals.append({"name": m["name"], "items": items})
+    return render_template("meals.html", d=d, meals=meals)
 
 if __name__ == "__main__":
     app.run(debug=True)
