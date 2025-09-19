@@ -29,7 +29,12 @@
   .train-title{ text-align:center; margin:0 0 6px; }
 
   .stack{ display:flex; flex-direction:column; gap:16px; }
-
+  .brand {
+    font-size: 34px;   
+    font-weight: 400;  
+    text-decoration: none;
+    color: #111;
+  }
   .ex-card{
     width:100%;
     border:1.5px solid #222; border-radius:16px; background:#fff;
@@ -47,14 +52,16 @@
     background:#fff; font-weight:700; cursor:pointer;
   }
 
-  .ex-header-col{
-    display:flex; flex-direction:column; align-items:center; gap:12px;
+  .ex-body{
+    display:flex; flex-direction:column; align-items:center; gap:5px;
   }
+  .set-list{ width:100%; }
+
   .ex-name-wrap{ display:flex; justify-content:center; }
   .ex-name-pill{
     display:inline-flex; align-items:center; justify-content:center;
     border:1.5px solid #222; border-radius:18px; background:#fff;
-    height:36px; padding-top: 8.5px; width:auto; 
+    height:36px; padding-top:8.5px; width:auto;
   }
   .ex-name-input{
     border:0; outline:none; background:transparent;
@@ -94,6 +101,8 @@
     border:1.5px solid #222; border-radius:10px;
     display:flex; align-items:center; justify-content:center;
     background:#fff; cursor:pointer; font-weight:700; font-size:20px;
+    align-self:center;  
+    margin:0;           
   }
 
   input[type=number]::-webkit-inner-spin-button,
@@ -129,27 +138,26 @@
       card.innerHTML = `
         <button class="kill-ex" data-del="${idx}">x</button>
 
-        <div class="ex-header-col">
+        <div class="ex-body">
           <div class="ex-name-wrap">
             <div class="ex-name-pill">
               <input class="ex-name-input" placeholder="Exercise" value="${ex.name || ''}">
             </div>
           </div>
+
+          <div class="set-list" id="sets-${idx}"></div>
+
           <button class="add-set-bottom" data-addset="${idx}">+</button>
         </div>
-
-        <div class="sets" id="sets-${idx}"></div>
       `;
       list.appendChild(card);
+
 
       const nameInput = card.querySelector('.ex-name-input');
       nameInput.oninput = e => { ex.name = e.target.value; sizePill(nameInput); };
       wirePillAutosize(nameInput);
 
       card.querySelector('.kill-ex').onclick = () => { state.exercises.splice(idx, 1); render(); };
-
-
-      card.querySelector('[data-addset]').onclick = () => { ex.sets.push({ weight:'', reps:'' }); render(); };
 
       const setsEl = card.querySelector('#sets-' + idx);
       ex.sets.forEach((s, sidx) => {
@@ -176,6 +184,8 @@
         rI.oninput = e => s.reps   = e.target.value;
         panel.querySelector('[data-delset]').onclick = () => { ex.sets.splice(sidx, 1); render(); };
       });
+
+      card.querySelector('[data-addset]').onclick = () => { ex.sets.push({ weight:'', reps:'' }); render(); };
     });
   }
 
