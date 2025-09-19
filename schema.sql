@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
   carbs_low_g      INTEGER,
   carbs_high_g     INTEGER,
   calories_target  INTEGER
+  COLUMN low_carb_start TEXT; 
 );
 
 -- Workouts (one per user per day)

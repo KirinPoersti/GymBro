@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import db
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import calendar
 from math import isfinite
 
@@ -45,6 +45,13 @@ def _to_int(x, default=None):
         return int(float(str(x)))
     except Exception:
         return default
+    
+def _valid_iso_date(s: str) -> bool:
+    try:
+        datetime.strptime(s, "%Y-%m-%d")
+        return True
+    except Exception:
+        return False
 
 def compute_calories_and_macros(weight_kg, height_cm, age, sex, activity_factor, goal, calorie_plan):
     # BMR - Mifflin–St Jeor
@@ -71,7 +78,6 @@ def compute_calories_and_macros(weight_kg, height_cm, age, sex, activity_factor,
     carbs_high_g = round((calories_after_protein * 0.60) / 4)
 
     return calories, protein_g, carbs_low_g, carbs_high_g
-
 
 # ---------- Register ----------
 @app.route("/register", methods=["GET", "POST"])
@@ -176,14 +182,43 @@ def dashboard():
     if m == 12: next_y, next_m = y+1, 1
     else:       next_y, next_m = y, m+1
 
+    # --- NEW: low/high-carb coloring sets ---
+    uid = session["user_id"]
+    user_row = db.query_one("SELECT low_carb_start FROM users WHERE id=?", (uid,))
+    lowcarb_dates, highcarb_dates = set(), set()
+
+    if user_row and user_row.get("low_carb_start"):
+        try:
+            start = datetime.strptime(user_row["low_carb_start"], "%Y-%m-%d").date()
+            for d in grid:
+                delta = (d - start).days
+                if delta >= 0:
+                    r = delta % 5
+                    if 0 <= r <= 3:
+                        lowcarb_dates.add(d.isoformat())   # 4 days blue
+                    elif r == 4:
+                        highcarb_dates.add(d.isoformat())  # 5th day green
+        except ValueError:
+            pass  # ignore bad stored value
+
+    # --- (optional) workout ticks for the grid range ---
+    start_iso, end_iso = grid[0].isoformat(), grid[-1].isoformat()
+    rows = db.query(
+        "SELECT wdate FROM workouts WHERE user_id=? AND wdate BETWEEN ? AND ?",
+        (uid, start_iso, end_iso)
+    )
+    workout_dates = {r["wdate"] for r in rows}
+
     return render_template(
         "dashboard.html",
         grid=grid, year=y, month=m,
         prev_y=prev_y, prev_m=prev_m,
         next_y=next_y, next_m=next_m,
-        today=today
+        today=today,
+        workout_dates=workout_dates,
+        lowcarb_dates=lowcarb_dates,
+        highcarb_dates=highcarb_dates,
     )
-
 # -------- Profile (height/weight/age) --------
 @app.route("/profile", methods=["GET", "POST"])
 def profile():
@@ -191,9 +226,10 @@ def profile():
     uid = session["user_id"]
 
     if request.method == "POST":
-        # fetch current values first
+        # fetch current values first (added low_carb_start)
         current = db.query_one(
-            "SELECT height_cm, weight_kg, age, sex, activity, goal, calorie_plan FROM users WHERE id = ?",
+            "SELECT height_cm, weight_kg, age, sex, activity, goal, calorie_plan, low_carb_start "
+            "FROM users WHERE id = ?",
             (uid,)
         ) or {}
 
@@ -211,43 +247,54 @@ def profile():
         w = keep_or_cast("weight_kg", float)
         a = keep_or_cast("age", int)
 
-        # new fields from the template (strings)
+        # strings
         sex = request.form.get("sex") or current.get("sex") or "male"
         activity = request.form.get("activity") or current.get("activity") or "1.55"
         goal = request.form.get("goal") or current.get("goal") or "casual"
         calorie_plan = request.form.get("calorie_plan") or current.get("calorie_plan") or "maintain"
 
+        # NEW: low-carb start date (YYYY-MM-DD), keep old if blank/invalid
+        raw_start = (request.form.get("low_carb_start") or "").strip()
+        if raw_start and _valid_iso_date(raw_start):
+            low_carb_start = raw_start
+        else:
+            low_carb_start = current.get("low_carb_start")
+
         # cast activity to float (template uses strings like "1.55")
         activity_f = _to_float(activity, None)
 
-        # compute derived values on server — ignore any submitted derived fields
+        # compute derived values (server-authoritative)
         calories, protein_g, carbs_low_g, carbs_high_g = compute_calories_and_macros(
             weight_kg=w, height_cm=h, age=a,
             sex=sex, activity_factor=activity_f,
             goal=goal, calorie_plan=calorie_plan
         )
 
-        # Update user record — include both preferences and computed targets
+        # Update user record — added low_carb_start
         db.execute(
             """UPDATE users
                SET height_cm = ?, weight_kg = ?, age = ?,
                    sex = ?, activity = ?, goal = ?, calorie_plan = ?,
+                   low_carb_start = ?,
                    calories_target = ?, protein_target_g = ?, carbs_low_g = ?, carbs_high_g = ?
                WHERE id = ?""",
             (h, w, a, sex, str(activity), goal, calorie_plan,
+             low_carb_start,
              calories, protein_g, carbs_low_g, carbs_high_g, uid)
         )
 
         flash("Profile updated.")
         return redirect(url_for("profile"))
 
-    # GET: fetch all fields used by template
+    # GET: include low_carb_start so the date input is prefilled
     user = db.query_one(
         "SELECT username, height_cm, weight_kg, age, sex, activity, goal, calorie_plan, "
-        "calories_target, protein_target_g, carbs_low_g, carbs_high_g FROM users WHERE id = ?",
+        "low_carb_start, calories_target, protein_target_g, carbs_low_g, carbs_high_g "
+        "FROM users WHERE id = ?",
         (uid,)
     )
     return render_template("profile.html", user=user)
+
 
 # -------- Settings menu --------
 @app.route("/settings")

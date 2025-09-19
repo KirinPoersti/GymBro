@@ -35,14 +35,48 @@
   {% for d in grid %}
     {% set dim = (d.month != month) %}
     {% set is_today = (d == today) %}
-    <a class="cell day{% if dim %} dim{% endif %}{% if is_today %} today{% endif %}"
+    {% set has_workout = d.isoformat() in workout_dates %}
+    {% set is_low = d.isoformat() in lowcarb_dates %}
+    {% set is_high = d.isoformat() in highcarb_dates %}
+    <a class="cell day
+              {% if dim %} dim{% endif %}
+              {% if is_today %} today{% endif %}
+              {% if is_low %} lowcarb{% endif %}
+              {% if is_high %} highcarb{% endif %}"
        href="{{ url_for('day_view', d=d.isoformat()) }}">
       <div class="num">{{ d.day }}</div>
+      {% if has_workout %}
+        <div class="tick" title="Workout logged">✓</div>
+      {% endif %}
     </a>
   {% endfor %}
 </div>
 
 <style>
+  /* Weekday headers: color the cell background, keep text black */
+  .cell.head{
+    align-items:center; justify-content:center; font-weight:700; height:44px;
+    background:#A91B0D;   /* cell background red */
+    color:#fff;           /* text stays black */
+    border-color:#222;
+  }
+
+  /* Day state backgrounds */
+  .cell.day.lowcarb { background: #D2DDE9; }  /* rgb(210,221,233) */
+  .cell.day.highcarb { background: #A8E4A0; }
+
+  /* Keep numbers/ticks readable (text already #111) */
+  .cell.day .num { font-weight:700; font-size:14px; color:#111; }
+
+  /* Workout tick (leave as is) */
+  .cell.day .tick{
+    position:absolute; right:8px; bottom:6px;
+    font-weight:800; font-size:50px; line-height:1;
+    color:#16a34a;
+  }
+
+  .cell.day.today{ outline:3px solid #7aa7ff; outline-offset:-3px; }
+
   .topbar {
   display: flex;
   align-items: flex-start;

@@ -57,6 +57,12 @@
       <option value="cut"      {{ 'selected' if user.get('calorie_plan') == 'cut'      else '' }}>Cut (-20%)</option>
       <option value="bulk"     {{ 'selected' if user.get('calorie_plan') == 'bulk'     else '' }}>Bulk (+10%)</option>
     </select>
+
+    <label> Low-carb start date: </label>
+    <input name="low_carb_start" id="low_carb_start" type="date"
+          value="{{ user.get('low_carb_start') or '' }}">
+
+
   </div>
 
   <hr>
