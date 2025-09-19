@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 {% block wrap_class %}wrap--wide{% endblock %}
 {% block header %}{% endblock %}
@@ -37,16 +36,12 @@
     color: #111;
   }
 
-  /* meal “card” mirrors .ex-card */
   .meal-card{
     width:100%;
     border:1.5px solid #222; border-radius:16px; background:#fff;
     padding:16px; position:relative; margin:0;
   }
-
-  .actions-row{
-    display:flex; justify-content:center; gap:12px; margin-top:6px;
-  }
+  .actions-row{ display:flex; justify-content:center; gap:12px; margin-top:6px; }
 
   .kill-meal{
     position:absolute; top:10px; right:10px;
@@ -57,8 +52,6 @@
 
   .meal-body{ display:flex; flex-direction:column; align-items:center; gap:8px; }
 
-  /* pill */
-  .meal-name-wrap{ display:flex; justify-content:center; }
   .meal-name-pill{
     display:inline-flex; align-items:center; justify-content:center;
     border:1.5px solid #222; border-radius:18px; background:#fff;
@@ -70,14 +63,23 @@
     width:auto; height:36px; line-height:36px;
   }
 
-  /* items inside a meal (mirrors set panels) */
-  .item-list{ width:100%; }
+  /* food item pill */
+  .food-name-wrap{ display:flex; justify-content:center; margin-bottom:8px; }
+  .food-name-pill{
+    display:inline-flex; align-items:center; justify-content:center;
+    border:1.5px solid #222; border-radius:18px; background:#fff;
+    height:36px; width:auto; padding-top:8.5px;
+  }
+  .food-name-input{
+    border:0; outline:none; background:transparent;
+    font-size:16px; text-align:center;
+    width:auto; height:36px; line-height:36px;
+  }
 
   .item-panel{
     border:1.5px solid #222; border-radius:16px; background:#fff;
     padding:18px; margin-top:12px; position:relative;
   }
-  .item-title{ text-align:center; font-weight:700; margin-bottom:16px; }
   .kill-item{
     position:absolute; top:10px; right:10px;
     width:28px; height:28px; border:1.5px solid #222; border-radius:8px;
@@ -105,21 +107,11 @@
     border:1.5px solid #222; border-radius:10px;
     display:flex; align-items:center; justify-content:center;
     background:#fff; cursor:pointer; font-weight:700; font-size:20px;
-    align-self:center;  
-    margin:0;           
-  }
-
-  input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button{ -webkit-appearance:none; margin:0; }
-  input[type=number]{ -moz-appearance:textfield; }
-
-  @media (max-width:640px){
-    .train-wrap{ width:100%; max-width:560px; padding:0 12px; }
+    align-self:center; margin:0;           
   }
 </style>
 
 <script>
-  // initial data from server (list of meals)
   const initial = {{ meals|tojson }};
   const list = document.getElementById('meal-list');
 
@@ -127,7 +119,7 @@
     const min = 120, max = 420;
     const text = input.value || input.placeholder || '';
     const w = Math.max(min, Math.min(max, 22 + text.length * 9));
-    input.closest('.meal-name-pill').style.width = w + 'px';
+    input.closest('div').style.width = w + 'px';
   }
   function wirePillAutosize(input){
     sizePill(input);
@@ -144,10 +136,8 @@
         <button class="kill-meal" data-del="${idx}">x</button>
 
         <div class="meal-body">
-          <div class="meal-name-wrap">
-            <div class="meal-name-pill">
-              <input class="meal-name-input" placeholder="Meal name (e.g., Breakfast)" value="${meal.name || ''}">
-            </div>
+          <div class="meal-name-pill">
+            <input class="meal-name-input" placeholder="Meal name (e.g., Breakfast)" value="${meal.name || ''}">
           </div>
 
           <div class="item-list" id="items-${idx}"></div>
@@ -169,7 +159,11 @@
         panel.className = 'item-panel';
         panel.innerHTML = `
           <button class="kill-item" data-delitem="${idx}-${j}">x</button>
-          <div class="item-title">Food ${j+1}</div>
+          <div class="food-name-wrap">
+            <div class="food-name-pill">
+              <input class="food-name-input" placeholder="Food item" value="${it.name || ''}">
+            </div>
+          </div>
           <div class="macro-grid">
             <div>
               <div class="big-square"><input class="big-input p" type="number" min="0" step="0.1" value="${it.protein ?? ''}"></div>
@@ -187,6 +181,10 @@
         `;
         itemsEl.appendChild(panel);
 
+        const foodInput = panel.querySelector('.food-name-input');
+        foodInput.oninput = e => { it.name = e.target.value; sizePill(foodInput); };
+        wirePillAutosize(foodInput);
+
         const pI = panel.querySelector('.p');
         const cI = panel.querySelector('.c');
         const kI = panel.querySelector('.k');
@@ -197,7 +195,7 @@
         panel.querySelector('[data-delitem]').onclick = () => { meal.items.splice(j, 1); render(); };
       });
 
-      card.querySelector('[data-additem]').onclick = () => { meal.items.push({ protein:'', carbs:'', calories:'' }); render(); };
+      card.querySelector('[data-additem]').onclick = () => { meal.items.push({ name:'', protein:'', carbs:'', calories:'' }); render(); };
     });
   }
 
@@ -212,7 +210,9 @@
         .filter(m => (m.name || '').trim() || m.items.length)
         .map(m => ({
           name: (m.name || '').trim(),
-          items: m.items.filter(it => (it.protein !== '' || it.carbs !== '' || it.calories !== '')),
+          items: m.items
+            .filter(it => (it.protein !== '' || it.carbs !== '' || it.calories !== '' || (it.name||'').trim()))
+            .map(it => ({ name: (it.name||'').trim(), protein: it.protein, carbs: it.carbs, calories: it.calories }))
         }))
     };
     const r = await fetch(location.pathname, {
