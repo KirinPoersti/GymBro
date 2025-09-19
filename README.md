@@ -19,7 +19,7 @@ Install the `flask` library:
 $ pip install flask
 ```
 
-Create the database tables and add initial data:
+Create the database tables:
 
 ```
 $ sqlite3 database.db < schema.sql
