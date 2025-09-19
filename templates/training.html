@@ -2,30 +2,59 @@
 {% block wrap_class %}wrap--wide{% endblock %}
 {% block header %}{% endblock %}
 {% block content %}
+
 <div class="topbar">
   <div class="brand">GymBro</div>
 </div>
 
-<h2 style="text-align:center;margin-bottom:10px;">{{ d }} – Training</h2>
+<div class="train-wrap">
+  <h2 class="train-title">{{ d }} – Training</h2>
 
-<div id="ex-list" class="stack"></div>
+  <div id="ex-list" class="stack"></div>
 
-<button class="btn" id="add-ex">+ Add exercise</button>
-<button class="btn" id="save" style="margin-top:10px;">Save</button>
+  <div class="actions-row">
+    <button class="btn" id="add-ex">+ Add exercise</button>
+    <button class="btn" id="save">Save</button>
+  </div>
+</div>
 
 <style>
-  .stack{display:flex;flex-direction:column;gap:16px;margin-bottom:12px;}
+  /* Centered page section that owns the title, cards, and buttons */
+  .train-wrap{
+    width: 560px;            /* <- single place to control page width */
+    margin: 0 auto 24px;     /* centered, grows with content */
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .train-title{ text-align:center; margin: 0 0 6px; }
 
-  .ex-card {
-    width: 500px;
-    margin: 0 auto;            /* ✅ centers the card horizontally */
+  .stack{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  /* Exercise card now fills the wrapper width */
+  .ex-card{
+    width: 100%;
     border: 1.5px solid #222;
     border-radius: 16px;
     background: #fff;
     padding: 16px;
     position: relative;
-}
-  /* top-right delete for whole exercise */
+    margin: 0;               /* no extra centering needed */
+  }
+
+  .actions-row{
+    display:flex;
+    justify-content:center;  /* center the two buttons */
+    gap:12px;
+    margin-top: 6px;
+  }
+
+  /* --- the rest of your styles stay the same --- */
+
   .kill-ex{
     position:absolute; top:10px; right:10px;
     width:30px; height:30px; border:1.5px solid #222; border-radius:8px;
@@ -33,16 +62,14 @@
     background:#fff; font-weight:700; cursor:pointer;
   }
 
-  /* header row */
   .ex-header{
     display:grid;
-    grid-template-columns: 1fr auto; /* left content + (hidden) right btn */
+    grid-template-columns: 1fr auto;
     column-gap:14px;
     align-items:center;
     margin-bottom:5px;
   }
 
-  /* centered pill for the name */
   .ex-name-wrap{ display:flex; justify-content:center; }
   .ex-name-pill{
     min-width:100px; max-width:150px;
@@ -52,18 +79,12 @@
   }
   .ex-name-input{
     width:100%;
-    height:36px;              /* same as pill height */
-    line-height:36px;         /* vertical center of the text */
-    border:0; outline:none;
-    background:transparent;
-    font-size:16px;
-    text-align:center;
+    height:36px; line-height:36px;
+    border:0; outline:none; background:transparent;
+    font-size:16px; text-align:center;
   }
-
-  /* hide the old header + (we'll use a bottom one) */
   .add-set-head{ display:none; }
 
-  /* ===== Set panel (separate card) ===== */
   .set-panel{
     border:1.5px solid #222; border-radius:16px; background:#fff;
     padding:18px; margin-top:12px; position:relative;
@@ -76,148 +97,129 @@
     background:#fff; cursor:pointer; font-weight:700;
   }
 
-  .set-grid{
-    display:flex; gap:32px; justify-content:center; align-items:flex-start;
-  }
+  .set-grid{ display:flex; gap:32px; justify-content:center; align-items:flex-start; }
 
-  /* slimmer set squares */
-  .big-square {
-    width: 60px;          /* or 70px if you want more room */
-    height: 60px;
-    border: 1.5px solid #222;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;  /* ✅ vertical center */
-    justify-content: center; /* ✅ horizontal center */
-    background: #fff;
-}
-  .big-input {
-    width: 100%;          /* ✅ fill parent square */
-    height: 100%;
-    border: 0;
-    outline: none;
-    text-align: center;   /* ✅ center horizontally */
-    font-size: 18px;
-    line-height: 1;       /* ✅ avoid pushing text upward */
-    margin: 0;            /* ✅ remove extra margins */
-    padding: 0;           /* ✅ no padding to cut text */
-    background: transparent;
-    }
+  .big-square{
+    width:60px; height:60px;
+    border:1.5px solid #222; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    background:#fff;
+  }
+  .big-input{
+    width:100%; height:100%;
+    border:0; outline:none;
+    text-align:center; font-size:18px; line-height:1;
+    margin:0; padding:0; background:transparent;
+  }
   .big-label{ text-align:center; margin-top:4px; font-size:13px; }
 
-  /* bottom + button: same visual language as a set square */
   .add-set-bottom{
-    width:60px; height:60px;        /* match set square size */
+    width:60px; height:60px;
     border:1.5px solid #222; border-radius:10px;
     display:flex; align-items:center; justify-content:center;
     background:#fff; cursor:pointer;
     font-weight:700; font-size:20px;
-    margin:16px auto 0;             /* centered under the sets */
+    margin:16px auto 0;
   }
 
-  /* tidy numbers: hide spinners for consistent centering */
   input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button{
-    -webkit-appearance: none; margin: 0;
-  }
+  input[type=number]::-webkit-outer-spin-button{ -webkit-appearance: none; margin: 0; }
   input[type=number]{ -moz-appearance: textfield; }
+
+  /* Optional: make it fluid on small screens */
+  @media (max-width: 640px){
+    .train-wrap{ width: 100%; max-width: 560px; padding: 0 12px; }
+  }
 </style>
 
 <script>
-const initial = {{ exercises|tojson }};
-const list = document.getElementById('ex-list');
+  /* JS unchanged */
+  const initial = {{ exercises|tojson }};
+  const list = document.getElementById('ex-list');
 
-function render(){
-  list.innerHTML = '';
-
-  state.exercises.forEach((ex, idx) => {
-    const card = document.createElement('div');
-    card.className = 'ex-card';
-    card.innerHTML = `
-      <button class="kill-ex" data-del="${idx}">x</button>
-
-      <div class="ex-header">
-        <div>
-          <div class="ex-name-wrap">
-            <div class="ex-name-pill">
-              <input class="ex-name-input" placeholder="Exercise name" value="${ex.name || ''}">
-            </div>
-          </div>
-        </div>
-        <button class="add-set-head" data-addset="${idx}">+</button>
-      </div>
-
-      <div class="sets" id="sets-${idx}"></div>
-    `;
-    list.appendChild(card);
-
-    // wire name + delete exercise
-    card.querySelector('.ex-name-input').oninput = e => ex.name = e.target.value;
-    card.querySelector('.kill-ex').onclick = () => { state.exercises.splice(idx,1); render(); };
-
-    // render each Set as its own panel
-    const setsEl = card.querySelector('#sets-' + idx);
-    ex.sets.forEach((s, sidx) => {
-      const panel = document.createElement('div');
-      panel.className = 'set-panel';
-      panel.innerHTML = `
-        <button class="kill-set" data-delset="${idx}-${sidx}">x</button>
-        <div class="set-title">Set ${sidx+1}</div>
-        <div class="set-grid">
+  function render(){
+    list.innerHTML = '';
+    state.exercises.forEach((ex, idx) => {
+      const card = document.createElement('div');
+      card.className = 'ex-card';
+      card.innerHTML = `
+        <button class="kill-ex" data-del="${idx}">x</button>
+        <div class="ex-header">
           <div>
-            <div class="big-square">
-              <input class="big-input" type="number" min="0" step="0.5" value="${s.weight ?? ''}">
+            <div class="ex-name-wrap">
+              <div class="ex-name-pill">
+                <input class="ex-name-input" placeholder="Exercise name" value="${ex.name || ''}">
+              </div>
             </div>
-            <div class="big-label">kg</div>
           </div>
-          <div>
-            <div class="big-square">
-              <input class="big-input" type="number" min="0" step="1" value="${s.reps ?? ''}">
-            </div>
-            <div class="big-label">reps</div>
-          </div>
+          <button class="add-set-head" data-addset="${idx}">+</button>
         </div>
+        <div class="sets" id="sets-${idx}"></div>
       `;
-      setsEl.appendChild(panel);
+      list.appendChild(card);
 
-      const [wI, rI] = panel.querySelectorAll('.big-input');
-      wI.oninput = e => s.weight = e.target.value;
-      rI.oninput = e => s.reps   = e.target.value;
-      panel.querySelector('[data-delset]').onclick = () => { ex.sets.splice(sidx,1); render(); };
+      card.querySelector('.ex-name-input').oninput = e => ex.name = e.target.value;
+      card.querySelector('.kill-ex').onclick = () => { state.exercises.splice(idx,1); render(); };
+
+      const setsEl = card.querySelector('#sets-' + idx);
+      ex.sets.forEach((s, sidx) => {
+        const panel = document.createElement('div');
+        panel.className = 'set-panel';
+        panel.innerHTML = `
+          <button class="kill-set" data-delset="${idx}-${sidx}">x</button>
+          <div class="set-title">Set ${sidx+1}</div>
+          <div class="set-grid">
+            <div>
+              <div class="big-square">
+                <input class="big-input" type="number" min="0" step="0.5" value="${s.weight ?? ''}">
+              </div>
+              <div class="big-label">kg</div>
+            </div>
+            <div>
+              <div class="big-square">
+                <input class="big-input" type="number" min="0" step="1" value="${s.reps ?? ''}">
+              </div>
+              <div class="big-label">reps</div>
+            </div>
+          </div>
+        `;
+        setsEl.appendChild(panel);
+
+        const [wI, rI] = panel.querySelectorAll('.big-input');
+        wI.oninput = e => s.weight = e.target.value;
+        rI.oninput = e => s.reps   = e.target.value;
+        panel.querySelector('[data-delset]').onclick = () => { ex.sets.splice(sidx,1); render(); };
+      });
+
+      const addBottom = document.createElement('button');
+      addBottom.className = 'add-set-bottom';
+      addBottom.textContent = '+';
+      addBottom.onclick = () => { ex.sets.push({reps:'', weight:''}); render(); };
+      card.appendChild(addBottom);
     });
+  }
 
-    // bottom-centered + button (same size as a set square)
-    const addBottom = document.createElement('button');
-    addBottom.className = 'add-set-bottom';
-    addBottom.textContent = '+';
-    addBottom.onclick = () => { ex.sets.push({reps:'', weight:''}); render(); };
-    card.appendChild(addBottom);
-  });
-}
-
-const state = { exercises: (initial && initial.length ? initial : [{name:'', sets:[] }]) };
-render();
-
-document.getElementById('add-ex').onclick = () => {
-  state.exercises.push({name:'', sets:[]});
+  const state = { exercises: (initial && initial.length ? initial : [{name:'', sets:[] }]) };
   render();
-};
 
-document.getElementById('save').onclick = async () => {
-  const payload = {
-    exercises: state.exercises
-      .filter(e => (e.name||'').trim() || e.sets.length)
-      .map(e => ({
-        name: (e.name||'').trim(),
-        sets: e.sets.filter(s => (s.reps!=='' || s.weight!=='')),
-      }))
+  document.getElementById('add-ex').onclick = () => { state.exercises.push({name:'', sets:[]}); render(); };
+
+  document.getElementById('save').onclick = async () => {
+    const payload = {
+      exercises: state.exercises
+        .filter(e => (e.name||'').trim() || e.sets.length)
+        .map(e => ({
+          name: (e.name||'').trim(),
+          sets: e.sets.filter(s => (s.reps!=='' || s.weight!=='')),
+        }))
+    };
+    const r = await fetch(location.pathname, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (r.ok) { alert('Saved ✅'); } else { alert('Save failed'); }
   };
-  const r = await fetch(location.pathname, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(payload)
-  });
-  if (r.ok) { alert('Saved ✅'); } else { alert('Save failed'); }
-};
 </script>
+
 {% endblock %}
