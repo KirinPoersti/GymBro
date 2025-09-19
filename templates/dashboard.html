@@ -53,22 +53,18 @@
 </div>
 
 <style>
-  /* Weekday headers: color the cell background, keep text black */
   .cell.head{
     align-items:center; justify-content:center; font-weight:700; height:44px;
-    background:#A91B0D;   /* cell background red */
-    color:#fff;           /* text stays black */
+    background:#A91B0D;   
+    color:#fff;           
     border-color:#222;
   }
 
-  /* Day state backgrounds */
-  .cell.day.lowcarb { background: #D2DDE9; }  /* rgb(210,221,233) */
+  .cell.day.lowcarb { background: #D2DDE9; }  
   .cell.day.highcarb { background: #A8E4A0; }
 
-  /* Keep numbers/ticks readable (text already #111) */
   .cell.day .num { font-weight:700; font-size:14px; color:#111; }
 
-  /* Workout tick (leave as is) */
   .cell.day .tick{
     position:absolute; right:8px; bottom:6px;
     font-weight:800; font-size:50px; line-height:1;
@@ -134,7 +130,6 @@
     display:flex; align-items:flex-start; justify-content:flex-start;
     padding:8px; text-decoration:none; color:#111; position:relative;
   }
-  .cell.head{ align-items:center; justify-content:center; font-weight:700; height:44px; }
   .cell.day .num{ font-weight:700; font-size:14px; }
   .cell.day.dim{ opacity:.45; }
   .cell.day.today{ outline:3px solid #7aa7ff; outline-offset:-3px; }

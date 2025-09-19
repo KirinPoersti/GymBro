@@ -176,6 +176,19 @@ def dashboard():
     if m == 12: next_y, next_m = y+1, 1
     else:       next_y, next_m = y, m+1
 
+    start_iso, end_iso = grid[0].isoformat(), grid[-1].isoformat()
+    rows = db.query(
+        """
+        SELECT DISTINCT w.wdate
+        FROM workouts w
+        JOIN exercises e ON e.workout_id = w.id
+        JOIN sets s      ON s.exercise_id = e.id
+        WHERE w.user_id = ? AND w.wdate BETWEEN ? AND ?
+        """,
+        (session["user_id"], start_iso, end_iso)
+    )
+    workout_dates = {r["wdate"] for r in rows}
+
     uid = session["user_id"]
     user_row = db.query_one("SELECT low_carb_start FROM users WHERE id=?", (uid,))
     lowcarb_dates, highcarb_dates = set(), set()
@@ -194,13 +207,6 @@ def dashboard():
         except ValueError:
             pass  
 
-    start_iso, end_iso = grid[0].isoformat(), grid[-1].isoformat()
-    rows = db.query(
-        "SELECT wdate FROM workouts WHERE user_id=? AND wdate BETWEEN ? AND ?",
-        (uid, start_iso, end_iso)
-    )
-    workout_dates = {r["wdate"] for r in rows}
-
     return render_template(
         "dashboard.html",
         grid=grid, year=y, month=m,
@@ -211,6 +217,7 @@ def dashboard():
         lowcarb_dates=lowcarb_dates,
         highcarb_dates=highcarb_dates,
     )
+
 # -------- Profile (height/weight/age) --------
 @app.route("/profile", methods=["GET", "POST"])
 def profile():
@@ -351,7 +358,6 @@ def settings_language():
 def settings_delete():
     if (r := require_auth()): return r
     uid = session["user_id"]
-    # TODO: also delete dependent data (plans/exercises/meals) when those exist
     db.execute("DELETE FROM users WHERE id = ?", (uid,))
     session.clear()
     flash("Account deleted.")
@@ -364,6 +370,7 @@ def get_or_create_workout(uid, d):
         w = db.query_one("SELECT * FROM workouts WHERE user_id=? AND wdate=?", (uid, d))
     return w
 
+# -------- Trainings --------
 @app.route("/day/<d>/training", methods=["GET", "POST"])
 def training(d):
     if "user_id" not in session:
@@ -382,29 +389,53 @@ def training(d):
 
         w = get_or_create_workout(uid, d)
 
-        db.execute("DELETE FROM sets WHERE exercise_id IN (SELECT id FROM exercises WHERE workout_id=?)", (w["id"],))
+        db.execute(
+            "DELETE FROM sets WHERE exercise_id IN (SELECT id FROM exercises WHERE workout_id=?)",
+            (w["id"],)
+        )
         db.execute("DELETE FROM exercises WHERE workout_id=?", (w["id"],))
+
+        inserted_exercises = 0  
 
         for idx, ex in enumerate(exercises):
             name = (ex.get("name") or "").strip()
-            if not name and not ex.get("sets"):  
-                continue
 
-            db.execute("INSERT INTO exercises (workout_id, name, ord) VALUES (?, ?, ?)",
-                       (w["id"], name or f"Exercise {idx+1}", idx))
-            ex_id = db.query_one("SELECT id FROM exercises WHERE workout_id=? AND ord=?",
-                                 (w["id"], idx))["id"]
-
-            for s_idx, s in enumerate(ex.get("sets", []), start=1):
+            raw_sets = ex.get("sets", []) or []
+            sets_in = []
+            for s in raw_sets:
                 reps_raw = s.get("reps")
                 weight_raw = s.get("weight")
+                has_reps = (reps_raw not in (None, ""))
+                has_weight = (weight_raw not in (None, ""))
+                if has_reps or has_weight:
 
-                reps = int(reps_raw) if reps_raw not in (None, "") else None
-                weight = (float(str(weight_raw).replace(",", ".")) 
-                          if weight_raw not in (None, "") else None)
+                    reps = int(reps_raw) if has_reps else None
+                    weight = float(str(weight_raw).replace(",", ".")) if has_weight else None
+                    sets_in.append({"reps": reps, "weight": weight})
 
-                db.execute("INSERT INTO sets (exercise_id, set_no, reps, weight) VALUES (?, ?, ?, ?)",
-                           (ex_id, s_idx, reps, weight))
+
+            if not name and not sets_in:
+                continue
+
+            db.execute(
+                "INSERT INTO exercises (workout_id, name, ord) VALUES (?, ?, ?)",
+                (w["id"], name or f"Exercise {idx+1}", idx)
+            )
+            ex_id = db.query_one(
+                "SELECT id FROM exercises WHERE workout_id=? AND ord=?",
+                (w["id"], idx)
+            )["id"]
+
+            inserted_exercises += 1
+
+            for s_idx, s in enumerate(sets_in, start=1):
+                db.execute(
+                    "INSERT INTO sets (exercise_id, set_no, reps, weight) VALUES (?, ?, ?, ?)",
+                    (ex_id, s_idx, s["reps"], s["weight"])
+                )
+
+        if inserted_exercises == 0:
+            db.execute("DELETE FROM workouts WHERE id=?", (w["id"],))
 
         if request.is_json:
             return jsonify({"ok": True})
@@ -418,12 +449,14 @@ def training(d):
             sets_rows = db.query("SELECT * FROM sets WHERE exercise_id=? ORDER BY set_no", (e["id"],))
             exercises_payload.append({
                 "name": e["name"] or "",
-                "sets": [{"reps": (s["reps"] if s["reps"] is not None else ""),
-                          "weight": (s["weight"] if s["weight"] is not None else "")}
-                         for s in sets_rows]
+                "sets": [{
+                    "reps": (s["reps"] if s["reps"] is not None else ""),
+                    "weight": (s["weight"] if s["weight"] is not None else "")
+                } for s in sets_rows]
             })
 
     return render_template("training.html", d=d, exercises=exercises_payload)
+
 # -------- Meal --------
 @app.route("/day/<d>/meals", methods=["GET", "POST"])
 def meals_view(d):
