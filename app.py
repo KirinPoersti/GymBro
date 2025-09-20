@@ -466,7 +466,7 @@ def meals_view(d):
 
     try:
         y, m, dd = map(int, d.split("-"))
-        _ = date(y, m, dd)
+        cur_date = date(y, m, dd)
     except Exception:
         abort(404)
 
@@ -482,6 +482,29 @@ def meals_view(d):
     mi_cols = {c["name"] for c in db.query("PRAGMA table_info(meal_items)")}
     MI_HAS_NAME = "name" in mi_cols
     MI_HAS_FOOD = "food" in mi_cols
+
+    is_lowcarb = False
+    is_highcarb = False
+    suggested_carbs = None
+
+    u = db.query_one(
+        "SELECT low_carb_start, carbs_low_g, carbs_high_g FROM users WHERE id=?",
+        (uid,)
+    )
+    if u and u.get("low_carb_start"):
+        try:
+            start = datetime.strptime(u["low_carb_start"], "%Y-%m-%d").date()
+            delta = (cur_date - start).days
+            if delta >= 0:
+                r = delta % 5
+                if 0 <= r <= 3:
+                    is_lowcarb = True
+                    suggested_carbs = u.get("carbs_low_g")
+                elif r == 4:
+                    is_highcarb = True
+                    suggested_carbs = u.get("carbs_high_g")
+        except Exception:
+            pass
 
     if request.method == "POST":
         data = request.get_json(silent=True) or {}
@@ -508,16 +531,15 @@ def meals_view(d):
                 c  = _to_float_none(it.get("carbs"))
                 k  = _to_int_none(it.get("calories"))
                 if nm or p is not None or c is not None or k is not None:
-                    items_in.append({"name": nm, "protein": p or 0.0, "carbs": c or 0.0, "calories": k or 0})
+                    items_in.append({
+                        "name": nm, "protein": p or 0.0, "carbs": c or 0.0, "calories": k or 0
+                    })
 
             if not meal_name and not items_in:
                 continue
 
             db.execute("INSERT INTO meals (day_id, name, ord) VALUES (?, ?, ?)", (day["id"], meal_name, i))
-            meal_id = db.query_one(
-                "SELECT id FROM meals WHERE day_id=? AND ord=?",
-                (day["id"], i)
-            )["id"]
+            meal_id = db.query_one("SELECT id FROM meals WHERE day_id=? AND ord=?", (day["id"], i))["id"]
             saved_meals += 1
 
             for it in items_in:
@@ -529,7 +551,7 @@ def meals_view(d):
                     )
                 elif MI_HAS_FOOD:
                     if name_to_save == "":
-                        name_to_save = "-" 
+                        name_to_save = "-"  
                     db.execute(
                         "INSERT INTO meal_items (meal_id, food, protein, carbs, calories) VALUES (?,?,?,?,?)",
                         (meal_id, name_to_save, it["protein"], it["carbs"], it["calories"])
@@ -539,7 +561,6 @@ def meals_view(d):
                         "INSERT INTO meal_items (meal_id, protein, carbs, calories) VALUES (?,?,?,?)",
                         (meal_id, it["protein"], it["carbs"], it["calories"])
                     )
-
 
         if saved_meals == 0:
             db.execute("DELETE FROM meal_days WHERE id=?", (day["id"],))
@@ -561,7 +582,14 @@ def meals_view(d):
             items = db.query(q, (mrow["id"],))
             meals.append({"name": mrow["name"], "items": items})
 
-    return render_template("meals.html", d=d, meals=meals)
+    return render_template(
+        "meals.html",
+        d=d,
+        meals=meals,
+        is_lowcarb=is_lowcarb,
+        is_highcarb=is_highcarb,
+        suggested_carbs=suggested_carbs
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)

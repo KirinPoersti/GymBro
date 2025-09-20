@@ -8,7 +8,16 @@
 </div>
 
 <div class="train-wrap">
-  <h2 class="train-title">{{ d }} – Meals</h2>
+  <h2 class="train-title">
+    {{ d }} – Meals
+    {% if is_lowcarb %}
+      <span class="badge low">Low-carb day · target {{ suggested_carbs or '—' }} g</span>
+    {% elif is_highcarb %}
+      <span class="badge high">High-carb day · target {{ suggested_carbs or '—' }} g</span>
+    {% else %}
+      <span class="badge neutral">Regular · target {{ suggested_carbs or '—' }} g</span>
+    {% endif %}
+  </h2>
 
   <div id="meal-list" class="stack"></div>
 
@@ -19,6 +28,15 @@
 </div>
 
 <style>
+  .badge{
+    margin-left:8px; padding:4px 8px;
+    border:1.5px solid #222; border-radius:12px;
+    font-size:13px; background:#eee; color:#111;
+  }
+  .badge.low  { background:#D2DDE9; } 
+  .badge.high { background:#A8E4A0; } 
+  .badge.neutral { background:#eee; }
+
   .train-wrap{
     width:560px;
     margin:0 auto 24px;
