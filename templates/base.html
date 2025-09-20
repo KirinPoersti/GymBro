@@ -11,6 +11,45 @@
         fetchpriority="high">
 
   <style>
+    :root {}
+    /* iOS-y slide but super light: transform + opacity only */
+    ::view-transition-old(root) {
+      animation: vt-old 220ms cubic-bezier(.22,.61,.36,1) both;
+    }
+    ::view-transition-new(root) {
+      animation: vt-new 280ms cubic-bezier(.22,.61,.36,1) both;
+    }
+    @keyframes vt-old {
+      from { transform: translateX(0);    opacity: 1; }
+      to   { transform: translateX(-4%);  opacity: .98; }
+    }
+    @keyframes vt-new {
+      from { transform: translateX(10%);  opacity: .01; }
+      to   { transform: translateX(0);    opacity: 1; }
+    }
+
+    /* While transitioning, kill the expensive stuff just for the duration */
+    html.vt * {
+      transition: none !important;             /* stop layout thrash */
+    }
+    html.vt .liquidGlass-effect,
+    html.vt .liquidGlass-tint,
+    html.vt .liquidGlass-shine,
+    html.vt .cell,
+    html.vt .actions .icon-btn,
+    html.vt .actions .logout,
+    html.vt .btn {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      box-shadow: 0 1px 2px rgba(0,0,0,.06) !important; /* lighter shadow */
+    }
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      ::view-transition-old(root),
+      ::view-transition-new(root) { animation: none !important; }
+    }
+
     html, body, h1, h2, h3, h4, h5, h6,
     form, label, input, button, select, textarea,
     .title, .btn, .link, .flash {
@@ -213,6 +252,31 @@
 
   </style>
 </head>
+
+<script>
+  (function () {
+    function internal(a){ return a && a.origin === location.origin; }
+    function newTab(e,a){ return e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||a.target==='_blank'; }
+
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a');
+      if (!a || !internal(a) || newTab(e,a) || a.hasAttribute('download')) return;
+      const href = a.getAttribute('href') || '';
+      if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+
+      if (!document.startViewTransition) return; // fallback
+      e.preventDefault();
+
+      // Toggle perf-guard class during the transition only
+      document.documentElement.classList.add('vt');
+      const vt = document.startViewTransition(() => { window.location.href = a.href; });
+      // Remove class when finished (both settle paths)
+      Promise.resolve(vt && vt.finished).finally(() => {
+        document.documentElement.classList.remove('vt');
+      });
+    });
+  })();
+</script>
 
 <body>
   <div class="wrap {% block wrap_class %}{% endblock %}">

@@ -69,6 +69,7 @@ http://127.0.0.1:5000
 
 ## Potential Future Development 
 - Statistics dashboard
+- Performance enhancement
 - Multi Language support
 - Weekly/monthly workout summaries
 - Charts for calories, macros, and weight changes
