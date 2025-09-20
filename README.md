@@ -11,15 +11,23 @@ The calendar highlights training days with ✓ and colors cells according to car
 
 - [x] **User registration and login** (`/register`, `/login`, with password hashing).
 - [x] **Add, edit, delete entities**:
-  - **Workouts**: add/edit (wipe & replace for v1). If all sets are removed, the workout row is deleted.
-  - **Meals**: add/edit/delete. Saving with no meals/items deletes the meal-day entry.
+  - **Workouts**:
+    - Add, edit, and delete workouts per day
+    - Each workout contains exercises and sets
+  - **Meals**: 
+    - Add, edit, and delete meals per day
+    - Each meal can contain multiple food items with protein, carbs, and calories
+    - Suggested carb intake shown for low/high-carb days  
   - **Profile**: updating values saves preferences and recalculates derived targets.
 - [x] **View stored data**:
-  - Calendar shows days, ✓ ticks for real workouts, carb cycle colors.
-  - Day view with Training and Meals subpages.
-  - Meals page lists saved meals/items.
-  - Profile page displays computed calorie/macronutrient targets.
-- [ ] **Search functionality**: not implemented yet (see “Search functionality” below).
+    - Calendar shows days, ✓ ticks for real workouts, carb cycle colors.
+    - Day view with Training and Meals subpages.
+    - Meals page lists saved meals/items.
+    - Profile page displays computed calorie/macronutrient targets.
+- [x] **Search functionality**: 
+    - Exercise search with auto-suggestions
+      - Type into the exercise input to get Google-style suggestions
+      - Filter by **muscle group** (Glutes, Shoulders, Quads, Chest, Hamstrings, Triceps, Calves, Biceps, Abs, Back)  
 - [x] **README with setup and testing instructions**.
 
 ---
@@ -37,17 +45,24 @@ The calendar highlights training days with ✓ and colors cells according to car
 Install the `flask` library:
 
 ```
-$ pip install flask
+pip install flask
+pip install -r requirements.txt
 ```
 
 Create the database tables:
 
 ```
-$ sqlite3 database.db < schema.sql
+sqlite3 database.db < schema.sql
 ```
 
 Run the application:
 
 ```
-$ flask run
+
+flask run
+```
+Open in Browser:
+
+```
+http://127.0.0.1:5000
 ```
