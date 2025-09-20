@@ -458,21 +458,18 @@ def training(d):
     return render_template("training.html", d=d, exercises=exercises_payload)
 
 # -------- Meal --------
-# -------- Meal --------
 @app.route("/day/<d>/meals", methods=["GET", "POST"])
 def meals_view(d):
     if not session.get("user_id"):
         return redirect(url_for("login"))
     uid = session["user_id"]
 
-    # validate date (YYYY-MM-DD)
     try:
         y, m, dd = map(int, d.split("-"))
         _ = date(y, m, dd)
     except Exception:
         abort(404)
 
-    # --- helpers ---
     def _to_float_none(x):
         if x in (None, ""): return None
         try: return float(str(x).replace(",", "."))
@@ -482,7 +479,6 @@ def meals_view(d):
         f = _to_float_none(x)
         return int(f) if f is not None else None
 
-    # --- schema detection (do this ONCE; used by POST and GET) ---
     mi_cols = {c["name"] for c in db.query("PRAGMA table_info(meal_items)")}
     MI_HAS_NAME = "name" in mi_cols
     MI_HAS_FOOD = "food" in mi_cols
@@ -491,13 +487,11 @@ def meals_view(d):
         data = request.get_json(silent=True) or {}
         meals_payload = data.get("meals", []) or []
 
-        # Ensure a day row exists (only if we actually save something)
         day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
         if not day:
             db.execute("INSERT INTO meal_days (user_id, d) VALUES (?, ?)", (uid, d))
             day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
 
-        # wipe & replace
         db.execute("DELETE FROM meal_items WHERE meal_id IN (SELECT id FROM meals WHERE day_id=?)", (day["id"],))
         db.execute("DELETE FROM meals WHERE day_id=?", (day["id"],))
 
@@ -507,7 +501,6 @@ def meals_view(d):
             meal_name = (meal.get("name") or "").strip()
             raw_items = meal.get("items", []) or []
 
-            # Filter & normalize items (keep if any field present)
             items_in = []
             for it in raw_items:
                 nm = (it.get("name") or "").strip()
@@ -517,11 +510,9 @@ def meals_view(d):
                 if nm or p is not None or c is not None or k is not None:
                     items_in.append({"name": nm, "protein": p or 0.0, "carbs": c or 0.0, "calories": k or 0})
 
-            # Skip totally empty meals
             if not meal_name and not items_in:
                 continue
 
-            # Insert meal
             db.execute("INSERT INTO meals (day_id, name, ord) VALUES (?, ?, ?)", (day["id"], meal_name, i))
             meal_id = db.query_one(
                 "SELECT id FROM meals WHERE day_id=? AND ord=?",
@@ -529,7 +520,6 @@ def meals_view(d):
             )["id"]
             saved_meals += 1
 
-            # Insert items (support legacy 'food' column)
             for it in items_in:
                 name_to_save = (it["name"] or "").strip()
                 if MI_HAS_NAME:
@@ -539,7 +529,7 @@ def meals_view(d):
                     )
                 elif MI_HAS_FOOD:
                     if name_to_save == "":
-                        name_to_save = "-"  # ensure NOT NULL for legacy 'food'
+                        name_to_save = "-" 
                     db.execute(
                         "INSERT INTO meal_items (meal_id, food, protein, carbs, calories) VALUES (?,?,?,?,?)",
                         (meal_id, name_to_save, it["protein"], it["carbs"], it["calories"])
@@ -550,13 +540,12 @@ def meals_view(d):
                         (meal_id, it["protein"], it["carbs"], it["calories"])
                     )
 
-        # If nothing meaningful saved, remove the day row entirely
+
         if saved_meals == 0:
             db.execute("DELETE FROM meal_days WHERE id=?", (day["id"],))
 
         return jsonify({"ok": True})
 
-    # GET: load
     day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
     meals = []
     if day:
