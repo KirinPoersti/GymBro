@@ -3,7 +3,6 @@
 {% block header %}{% endblock %}
 {% block content %}
 
-
 <div class="topbar">
   <div class="brand">GymBro</div>
 </div>
@@ -21,21 +20,31 @@
 
 <style>
   .filter-row{
-    display:flex; gap:8px; align-items:center; justify-content:center;
-    margin-bottom:6px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
   }
 
   /* group select (and legacy .group-select) — borderless + shadow */
   .group-select,
   .ex-group{
-    border:none; border-radius:10px; padding:6px 10px; background:#fff;
-    font-size:14px; color:#111;
+    border: none;
+    border-radius: 10px;
+    padding: 6px 10px;
+    background: #fff;
+    font-size: 14px;
+    color: #111;
     box-shadow:
       0 1px 2px rgba(0,0,0,.08),
       0 4px 14px rgba(0,0,0,.08);
-    outline:none;
-    transition: box-shadow .2s ease, transform .2s ease, background .2s ease;
-    height:36px;
+    outline: none;
+    transition:
+      box-shadow .2s ease,
+      transform .2s ease,
+      background .2s ease;
+    height: 36px;
   }
   .ex-group:focus{
     box-shadow:
@@ -43,201 +52,338 @@
       0 2px 8px rgba(0,0,0,.12);
   }
 
-  .ex-pill { display:inline-flex; align-items:center; gap:8px; }
+  .ex-pill{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
 
   /* exercise name pill (flat, no shadow so it doesn’t float over the card) */
   .ex-name{
-  border:none; border-radius:18px; background:#fff;
-  height:36px; line-height:36px;
-  padding:0 12px; font-size:16px; text-align:center;
-  width:auto; display:inline-block;
-  outline:none;
-  /* give it pill shadow like other inputs */
-  box-shadow:
-    0 1px 2px rgba(0,0,0,.08),
-    0 8px 20px rgba(0,0,0,.08);
-  transition: width .15s ease, box-shadow .2s ease, background .2s ease;
-}
+    border: none;
+    border-radius: 18px;
+    background: #fff;
+    height: 36px;
+    line-height: 36px;
+    padding: 0 12px;
+    font-size: 16px;
+    text-align: center;
+    width: auto;
+    display: inline-block;
+    outline: none;
+
+    /* give it pill shadow like other inputs */
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.08),
+      0 8px 20px rgba(0,0,0,.08);
+    transition:
+      width .15s ease,
+      box-shadow .2s ease,
+      background .2s ease;
+  }
   .ex-name:focus{
     box-shadow:
       inset 0 0 0 2px rgba(122,167,255,1),
       0 2px 6px rgba(0,0,0,.10),
       0 14px 28px rgba(0,0,0,.16);
   }
+  .ex-name::placeholder{ color: #999; }
+  .ex-name:focus{ box-shadow: inset 0 0 0 2px rgba(122,167,255,1); }
 
-  .ex-name::placeholder{ color:#999; }
-  .ex-name:focus{
-    box-shadow: inset 0 0 0 2px rgba(122,167,255,1);
+  .ex-name-wrap{
+    display: flex;
+    justify-content: center;
   }
-
-  .ex-name-wrap{ display:flex; justify-content:center; }
 
   /* typeahead dropdown — borderless + shadow */
-  .typeahead-wrap { position:relative; display:inline-block; }
-  .typeahead{
-    position:absolute; z-index:20; background:#fff;
-    border:none; border-radius:10px;
-    box-shadow: 0 1px 2px rgba(0,0,0,.10), 0 10px 24px rgba(0,0,0,.12);
-    margin-top:4px; overflow:hidden; max-height:260px; overflow-y:auto;
-    left:50%; transform:translateX(-50%); min-width:320px;
+  .typeahead-wrap{
+    position: relative;
+    display: inline-block;
   }
-  .typeahead-item{ padding:8px 10px; cursor:pointer; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; }
-  .typeahead-item:hover, .typeahead-item.active { background:#f3f4f6; }
+  .typeahead{
+    position: absolute;
+    z-index: 20;
+    background: #fff;
+    border: none;
+    border-radius: 10px;
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.10),
+      0 10px 24px rgba(0,0,0,.12);
+    margin-top: 4px;
+    overflow: hidden;
+    max-height: 260px;
+    overflow-y: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 320px;
+  }
+  .typeahead-item{
+    padding: 8px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  .typeahead-item:hover,
+  .typeahead-item.active{
+    background: #f3f4f6;
+  }
 
   .train-wrap{
-    width:560px; margin:0 auto 24px;
-    display:flex; flex-direction:column; gap:16px;
+    width: 560px;
+    margin: 0 auto 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
-  .train-title{ text-align:center; margin:0 0 6px; }
-  .stack{ display:flex; flex-direction:column; gap:16px; }
-  .brand{ font-size:34px; text-decoration:none; color:#111; }
+  .train-title{ text-align: center; margin: 0 0 6px; }
+  .stack{ display: flex; flex-direction: column; gap: 16px; }
+  .brand{ font-size: 34px; text-decoration: none; color: #111; }
 
   /* cards + panels — borderless + shadows */
   .ex-card{
-    width:100%;
-    border:none; border-radius:16px; background:#fff;
-    padding:16px; position:relative; margin:0;
-    box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.10);
-    transition: box-shadow .2s ease, transform .2s ease, background .2s ease;
+    width: 100%;
+    border: none;
+    border-radius: 16px;
+    background: #fff;
+    padding: 16px;
+    position: relative;
+    margin: 0;
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.08),
+      0 8px 24px rgba(0,0,0,.10);
+    transition:
+      box-shadow .2s ease,
+      transform .2s ease,
+      background .2s ease;
   }
   .ex-card:hover{
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 14px 32px rgba(0,0,0,.16);
+    box-shadow:
+      0 2px 6px rgba(0,0,0,.10),
+      0 14px 32px rgba(0,0,0,.16);
   }
 
-  .actions-row{ display:flex; justify-content:center; gap:12px; margin-top:6px; }
+  .actions-row{
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 6px;
+  }
 
   /* kill buttons — soft buttons */
-  .kill-ex, .kill-set{
-    position:absolute; top:10px; right:10px;
-    width:30px; height:30px;
-    border:none; border-radius:10px; background:#fff; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 20px rgba(0,0,0,.10);
-    transition: box-shadow .2s ease, transform .2s ease, background .2s ease;
+  .kill-ex,
+  .kill-set{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.08),
+      0 8px 20px rgba(0,0,0,.10);
+    transition:
+      box-shadow .2s ease,
+      transform .2s ease,
+      background .2s ease;
   }
-  .kill-set{ width:28px; height:28px; }
-  .kill-ex:hover, .kill-set:hover{
+  .kill-set{ width: 28px; height: 28px; }
+  .kill-ex:hover,
+  .kill-set:hover{
     transform: translateY(-1px);
-    background:#f7f7f7;
-    box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 14px 28px rgba(0,0,0,.16);
+    background: #f7f7f7;
+    box-shadow:
+      0 2px 6px rgba(0,0,0,.10),
+      0 14px 28px rgba(0,0,0,.16);
   }
 
-  .ex-body{ display:flex; flex-direction:column; align-items:center; gap:5px; }
-  .set-list{ width:100%; }
+  .ex-body{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  .set-list{ width: 100%; }
 
   .set-panel{
-    border:none; border-radius:16px; background:#fff;
-    padding:18px; margin-top:12px; position:relative;
-    box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.10);
-    transition: box-shadow .2s ease, transform .2s ease;
+    border: none;
+    border-radius: 16px;
+    background: #fff;
+    padding: 18px;
+    margin-top: 12px;
+    position: relative;
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.08),
+      0 8px 24px rgba(0,0,0,.10);
+    transition:
+      box-shadow .2s ease,
+      transform .2s ease;
   }
   .set-panel:hover{
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 14px 32px rgba(0,0,0,.16);
+    box-shadow:
+      0 2px 6px rgba(0,0,0,.10),
+      0 14px 32px rgba(0,0,0,.16);
   }
 
-  .set-title{ text-align:center; margin-bottom:16px; }
+  .set-title{ text-align: center; margin-bottom: 16px; }
 
   /* macro squares */
-  .set-grid{ display:flex; gap:32px; justify-content:center; }
+  .set-grid{ display: flex; gap: 32px; justify-content: center; }
   .big-square{
-    width:60px; height:60px;
-    border:none; border-radius:10px; background:#fff;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 20px rgba(0,0,0,.08);
-    transition: box-shadow .2s ease, transform .2s ease, background .2s ease;
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 10px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.08),
+      0 8px 20px rgba(0,0,0,.08);
+    transition:
+      box-shadow .2s ease,
+      transform .2s ease,
+      background .2s ease;
   }
   .big-input{
-    width:100%; height:100%; border:0; outline:none; background:transparent;
-    text-align:center; font-size:18px; line-height:1; margin:0; padding:0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    outline: none;
+    background: transparent;
+    text-align: center;
+    font-size: 18px;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
   }
   .big-input:focus{
-    outline:none;
+    outline: none;
     box-shadow: inset 0 0 0 3px rgba(122,167,255,1);
-    border-radius:10px;
+    border-radius: 10px;
   }
-  .big-label{ text-align:center; margin-top:4px; font-size:13px; }
+  .big-label{ text-align: center; margin-top: 4px; font-size: 13px; }
 
   .add-set-bottom{
-    width:60px; height:60px;
-    border:none; border-radius:10px; background:#fff; cursor:pointer; font-size:20px;
-    align-self:center; margin:0;
-    box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 20px rgba(0,0,0,.10);
-    transition: box-shadow .2s ease, transform .2s ease, background .2s ease;
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 20px;
+    align-self: center;
+    margin: 0;
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.08),
+      0 8px 20px rgba(0,0,0,.10);
+    transition:
+      box-shadow .2s ease,
+      transform .2s ease,
+      background .2s ease;
   }
   .add-set-bottom:hover{
     transform: translateY(-1px);
-    background:#f7f7f7;
-    box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 14px 28px rgba(0,0,0,.16);
+    background: #f7f7f7;
+    box-shadow:
+      0 2px 6px rgba(0,0,0,.10),
+      0 14px 28px rgba(0,0,0,.16);
   }
 
   input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button{ -webkit-appearance:none; margin:0; }
-  input[type=number]{ -moz-appearance:textfield; }
+  input[type=number]::-webkit-outer-spin-button{
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type=number]{ -moz-appearance: textfield; }
 
-  @media (max-width:640px){
-    .train-wrap{ width:100%; max-width:560px; padding:0 12px; }
+  @media (max-width: 640px){
+    .train-wrap{
+      width: 100%;
+      max-width: 560px;
+      padding: 0 12px;
+    }
   }
 </style>
 
 <script>
   let currentGroup = 'All';
+
   const mg = document.getElementById('muscle-group');
   if (mg) {
     mg.addEventListener('change', (e) => {
       currentGroup = e.target.value || 'All';
     });
   }
+
   const initial = {{ exercises|tojson }};
   const list = document.getElementById('ex-list');
 
   function sizePill(input){
     // Smaller default; hugs “Exercise” nicely
-    const min = 110;           // default width for ex-name
-    const max = 420;
+    const min  = 110;          // default width for ex-name
+    const max  = 420;
     const text = input.value || input.placeholder || '';
-    const w = Math.max(min, Math.min(max, 18 + text.length * 9));
+    const w    = Math.max(min, Math.min(max, 18 + text.length * 9));
 
     input.style.width = w + 'px';
   }
-  function wirePillAutosize(input){
-    sizePill(input);
-    input.addEventListener('input', () => sizePill(input));
-  }
+
   function wirePillAutosize(input){
     sizePill(input);
     input.addEventListener('input', () => sizePill(input));
   }
 
-  const debounce = (fn, ms=150) => {
-  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-};
+  function wirePillAutosize(input){
+    sizePill(input);
+    input.addEventListener('input', () => sizePill(input));
+  }
+
+  const debounce = (fn, ms = 150) => {
+    let t;
+    return (...args) => {
+      clearTimeout(t);
+      t = setTimeout(() => fn(...args), ms);
+    };
+  };
 
   function attachTypeahead(input, getGroup){
     if (input._hasTypeahead) return;
     input._hasTypeahead = true;
 
     const wrap = input.closest('.typeahead-wrap') || input.parentElement;
-    const dd = document.createElement('div');
-    dd.className = 'typeahead';
+    const dd   = document.createElement('div');
+    dd.className   = 'typeahead';
     dd.style.display = 'none';
     wrap.appendChild(dd);
 
     let activeIndex = -1;
-    let items = [];
+    let items       = [];
 
     const show = () => { dd.style.display = items.length ? 'block' : 'none'; };
     const hide = () => { dd.style.display = 'none'; activeIndex = -1; };
 
-    const renderDD = (list=[]) => {
+    const renderDD = (list = []) => {
       items = list;
       dd.innerHTML = '';
       items.forEach((name, i) => {
         const el = document.createElement('div');
-        el.className = 'typeahead-item' + (i === activeIndex ? ' active' : '');
+        el.className  = 'typeahead-item' + (i === activeIndex ? ' active' : '');
         el.textContent = name;
-        el.onclick = () => { input.value = name; input.dispatchEvent(new Event('input')); hide(); };
+        el.onclick     = () => {
+          input.value = name;
+          input.dispatchEvent(new Event('input'));
+          hide();
+        };
         dd.appendChild(el);
       });
       show();
@@ -251,19 +397,39 @@
         if (!r.ok) { renderDD([]); return; }
         const data = await r.json();
         renderDD(data);
-      } catch { renderDD([]); }
+      } catch {
+        renderDD([]);
+      }
     }, 120);
 
-    input.addEventListener('input', (e) => { activeIndex = -1; fetchSuggestions(e.target.value); });
+    input.addEventListener('input', (e) => {
+      activeIndex = -1;
+      fetchSuggestions(e.target.value);
+    });
 
     input.addEventListener('keydown', (e) => {
       if (dd.style.display === 'none') return;
-      const total = items.length; if (!total) return;
-      if (e.key === 'ArrowDown') { e.preventDefault(); activeIndex = (activeIndex + 1) % total; updateActive(); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndex = (activeIndex - 1 + total) % total; updateActive(); }
-      else if (e.key === 'Enter') {
-        if (activeIndex >= 0) { e.preventDefault(); input.value = items[activeIndex]; input.dispatchEvent(new Event('input')); hide(); }
-      } else if (e.key === 'Escape') { hide(); }
+      const total = items.length;
+      if (!total) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeIndex = (activeIndex + 1) % total;
+        updateActive();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeIndex = (activeIndex - 1 + total) % total;
+        updateActive();
+      } else if (e.key === 'Enter') {
+        if (activeIndex >= 0) {
+          e.preventDefault();
+          input.value = items[activeIndex];
+          input.dispatchEvent(new Event('input'));
+          hide();
+        }
+      } else if (e.key === 'Escape') {
+        hide();
+      }
     });
 
     function updateActive(){
@@ -302,26 +468,33 @@
               <input class="ex-name" placeholder="Exercise" value="${ex.name || ''}">
             </div>
           </div>
+
           <div class="set-list" id="sets-${idx}"></div>
 
           <button class="add-set-bottom" data-addset="${idx}">+</button>
         </div>
       `;
       list.appendChild(card);
-      
+
       const nameInput = card.querySelector('.ex-name');
-      nameInput.oninput = e => { ex.name = e.target.value; sizePill(nameInput); };
+      nameInput.oninput = (e) => {
+        ex.name = e.target.value;
+        sizePill(nameInput);
+      };
       wirePillAutosize(nameInput);
       attachTypeahead(nameInput, () => ex.group || 'All');
-      
+
       const groupSel = card.querySelector('.ex-group');
-      groupSel.value = ex.group || 'All';
-      groupSel.onchange = e => {
+      groupSel.value  = ex.group || 'All';
+      groupSel.onchange = (e) => {
         ex.group = e.target.value || 'All';
         nameInput.dispatchEvent(new Event('input'));
       };
 
-      card.querySelector('.kill-ex').onclick = () => { state.exercises.splice(idx, 1); render(); };
+      card.querySelector('.kill-ex').onclick = () => {
+        state.exercises.splice(idx, 1);
+        render();
+      };
 
       const setsEl = card.querySelector('#sets-' + idx);
       ex.sets.forEach((s, sidx) => {
@@ -332,11 +505,15 @@
           <div class="set-title">Set ${sidx + 1}</div>
           <div class="set-grid">
             <div>
-              <div class="big-square"><input class="big-input" type="number" min="0" step="0.5" value="${s.weight ?? ''}"></div>
+              <div class="big-square">
+                <input class="big-input" type="number" min="0" step="0.5" value="${s.weight ?? ''}">
+              </div>
               <div class="big-label">kg</div>
             </div>
             <div>
-              <div class="big-square"><input class="big-input" type="number" min="0" step="1" value="${s.reps ?? ''}"></div>
+              <div class="big-square">
+                <input class="big-input" type="number" min="0" step="1" value="${s.reps ?? ''}">
+              </div>
               <div class="big-label">reps</div>
             </div>
           </div>
@@ -344,22 +521,33 @@
         setsEl.appendChild(panel);
 
         const [wI, rI] = panel.querySelectorAll('.big-input');
-        wI.oninput = e => s.weight = e.target.value;
-        rI.oninput = e => s.reps   = e.target.value;
-        panel.querySelector('[data-delset]').onclick = () => { ex.sets.splice(sidx, 1); render(); };
+        wI.oninput = (e) => s.weight = e.target.value;
+        rI.oninput = (e) => s.reps   = e.target.value;
+
+        panel.querySelector('[data-delset]').onclick = () => {
+          ex.sets.splice(sidx, 1);
+          render();
+        };
       });
 
-      card.querySelector('[data-addset]').onclick = () => { ex.sets.push({ weight:'', reps:'' }); render(); };
+      card.querySelector('[data-addset]').onclick = () => {
+        ex.sets.push({ weight: '', reps: '' });
+        render();
+      };
     });
   }
 
-  const state = { exercises: (initial && initial.length ? initial : [{ name:'', sets:[] }]) };
+  const state = {
+    exercises: (initial && initial.length ? initial : [{ name: '', sets: [] }])
+  };
+
   render();
 
   document.getElementById('add-ex').onclick = () => {
-    state.exercises.push({ name:'', sets:[] });
+    state.exercises.push({ name: '', sets: [] });
     render();
   };
+
   document.getElementById('save').onclick = async () => {
     const payload = {
       exercises: state.exercises
@@ -369,11 +557,13 @@
           sets: e.sets.filter(s => (s.reps !== '' || s.weight !== '')),
         }))
     };
+
     const r = await fetch(location.pathname, {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
+
     alert(r.ok ? 'Saved ✅' : 'Save failed');
   };
 </script>

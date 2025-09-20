@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>GymBro</title>
+  <meta charset="utf-8" />
+  <title>🏋🏿GymBro</title>
+
   <style>
     html, body, h1, h2, h3, h4, h5, h6,
     form, label, input, button, select, textarea,
@@ -19,10 +20,10 @@
     .wrap {
       max-width: 360px;
       margin: 48px auto;
-      background: #fff;
       padding: 28px;
       border-radius: 14px;
-      /* softer elevation */
+      background: #fff;
+
       box-shadow:
         0 1px 2px rgba(0,0,0,.06),
         0 12px 36px rgba(0,0,0,.10);
@@ -33,26 +34,33 @@
     }
 
     .title {
-      text-align: center;
       margin: 0 0 20px;
+      text-align: center;
     }
 
-    form { display: flex; flex-direction: column; }
-    label { margin: 8px 0 4px; }
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      margin: 8px 0 4px;
+    }
 
     input {
       width: 100%;
-      padding: 8px 10px;
-      border: none;               /* removed border */
-      border-radius: 12px;
-      margin-bottom: 12px;
       box-sizing: border-box;
-
+      margin-bottom: 12px;
+      padding: 8px 10px;
+      border: none;
+      border-radius: 12px;
       background: #fff;
       box-shadow:
         0 1px 2px rgba(0,0,0,.08),
         0 8px 20px rgba(0,0,0,.08);
-      transition: box-shadow .2s ease, transform .2s ease, background .2s ease;
+      transition:
+        box-shadow .2s ease,
+        transform .2s ease,
+        background .2s ease;
     }
     input:focus {
       outline: none;
@@ -64,18 +72,20 @@
 
     .btn {
       align-self: center;
-      padding: 10px 20px;
-      border-radius: 14px;
-      border: none;              /* removed border */
-      background: #fff;
-      cursor: pointer;
-      font-size: 1rem;
       margin-top: 6px;
-
+      padding: 10px 20px;
+      border: none;
+      border-radius: 14px;
+      background: #fff;
+      font-size: 1rem;
+      cursor: pointer;
       box-shadow:
         0 1px 2px rgba(0,0,0,.08),
         0 8px 24px rgba(0,0,0,.10);
-      transition: box-shadow .2s ease, transform .2s ease, background .2s ease;
+      transition:
+        box-shadow .2s ease,
+        transform .2s ease,
+        background .2s ease;
     }
     .btn:hover {
       transform: translateY(-1px);
@@ -93,18 +103,18 @@
     }
 
     .link {
-      display: block;
-      text-align: center;
       margin-top: 12px;
       font-size: .9rem;
+      text-align: center;
+      display: block;
     }
 
     .flash {
-      background:#fff2c0;
-      border:none;  /* no hard border */
-      padding:8px 10px;
-      border-radius:8px;
-      margin:10px 0;
+      margin: 10px 0;
+      padding: 8px 10px;
+      border: none;               
+      border-radius: 8px;
+      background: #fff2c0;
       box-shadow:
         0 1px 2px rgba(0,0,0,.08),
         0 4px 12px rgba(0,0,0,.08);
@@ -112,25 +122,27 @@
 
     .global-topbar {
       display: flex;
-      justify-content: space-between; 
       align-items: center;
+      justify-content: space-between;
       margin-bottom: 16px;
     }
 
     .nav-btn {
-      font-size: 14px;
       padding: 8px 16px;
-      border: none;              /* removed border */
+      border: none;                
       border-radius: 14px;
       background: #fff;
       color: #111;
+      font-size: 14px;
       text-decoration: none;
       cursor: pointer;
-
       box-shadow:
         0 1px 2px rgba(0,0,0,.08),
         0 8px 24px rgba(0,0,0,.10);
-      transition: box-shadow .2s ease, transform .2s ease, background .2s ease;
+      transition:
+        box-shadow .2s ease,
+        transform .2s ease,
+        background .2s ease;
     }
     .nav-btn:hover {
       transform: translateY(-1px);
@@ -148,25 +160,27 @@
     }
   </style>
 </head>
+
 <body>
   <div class="wrap {% block wrap_class %}{% endblock %}">
     {% block header %}
-      <h1 class="title">GymBro</h1>  
+      <h1 class="title">🏋🏿GymBro</h1>
     {% endblock %}
-    
-    {% set on_dashboard = request.endpoint == 'dashboard' %}
-  <div class="global-topbar">
-    {% if not on_dashboard %}
-      <button class="nav-btn" onclick="history.back()">← Back</button>
-    {% else %}
-      <span></span>
-    {% endif %}
 
-    {# only show Home if logged in #}
-    {% if session.get('username') %}
-      <a class="nav-btn" href="{{ url_for('dashboard') }}">🏠 Home</a>
-    {% endif %}
-  </div>
+    {% set on_dashboard = request.endpoint == 'dashboard' %}
+
+    <div class="global-topbar">
+      {% if session.get('username') and not on_dashboard %}
+        <button class="nav-btn" type="button" onclick="history.back()">← Back</button>
+      {% else %}
+        <span></span>
+      {% endif %}
+
+      {% if session.get('username') %}
+        <a class="nav-btn" href="{{ url_for('dashboard') }}">🏠 Home</a>
+      {% endif %}
+    </div>
+
 
     {% for m in get_flashed_messages() %}
       <div class="flash">{{ m }}</div>

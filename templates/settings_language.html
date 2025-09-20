@@ -1,57 +1,59 @@
 {% extends "base.html" %}
 {% block header %}{% endblock %}
 {% block content %}
+
 <h1 class="title">Language</h1>
+
 <form method="post" class="lang-form">
-  <label>Choose language</label>
-  <select name="language">
-    <option value="en" {{ 'selected' if current=='en' else '' }}>English</option>
-    <option value="fi" {{ 'selected' if current=='fi' else '' }}>Suomi</option>
+  <label for="language">Choose language:</label>
+  <select id="language" name="language">
+    <option value="en" {{ 'selected' if current == 'en' else '' }}>English</option>
+    <option value="fi" {{ 'selected' if current == 'fi' else '' }}>Suomi</option>
   </select>
+
   <button class="btn" type="submit">Confirm</button>
 </form>
 
 <style>
-.lang-form {
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  max-width:280px;
-  margin:0 auto;
-  align-items:center;
-}
+  .lang-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 280px;
+    margin: 0 auto;
+    align-items: center;
+  }
 
-/* label */
-.lang-form label {
-  font-weight:500;
-  font-size:14px;
-  color:#222;
-}
+  .lang-form label {
+    font-weight: 500;
+    font-size: 14px;
+    color: #222;
+  }
 
-/* styled select: same as profile page */
-.lang-form select {
-  max-width:220px;
-  padding:6px 10px;
-  border:none;
-  border-radius:10px;
-  background:#fff;
-  font-size:15px;
-  color:#111;
-  box-shadow:
-    0 1px 2px rgba(0,0,0,.08),
-    0 4px 14px rgba(0,0,0,.08);
-  transition: box-shadow .2s ease, transform .2s ease, background .2s ease;
-}
-.lang-form select:focus {
-  outline:none;
-  box-shadow:
-    inset 0 0 0 2px rgba(122,167,255,1),
-    0 2px 8px rgba(0,0,0,.12);
-}
+  .lang-form select {
+    max-width: 220px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 15px;
+    color: #111;
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.08),
+      0 4px 14px rgba(0,0,0,.08);
+    transition: box-shadow .2s ease, transform .2s ease, background .2s ease;
+  }
 
-/* confirm button inherits .btn styling */
-.btn {
-  margin-top:8px;
-}
+  .lang-form select:focus {
+    outline: none;
+    box-shadow:
+      inset 0 0 0 2px rgba(122,167,255,1),
+      0 2px 8px rgba(0,0,0,.12);
+  }
+
+  .btn {
+    margin-top: 8px;
+  }
 </style>
+
 {% endblock %}

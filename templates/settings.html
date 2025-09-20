@@ -1,59 +1,63 @@
 {% extends "base.html" %}
 {% block header %}{% endblock %}
 {% block content %}
+
 <h1 class="title">Settings</h1>
+
 <div class="stack">
   <a class="block" href="{{ url_for('settings_username') }}">Change username</a>
   <a class="block" href="{{ url_for('settings_password') }}">Change password</a>
   <a class="block" href="{{ url_for('settings_language') }}">Language</a>
-  <form method="post" action="{{ url_for('settings_delete') }}" 
+  <form method="post" action="{{ url_for('settings_delete') }}"
         onsubmit="return confirm('Delete account? This cannot be undone.');">
     <button class="block danger" type="submit">Delete account</button>
   </form>
 </div>
 
 <style>
-.stack {
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  max-width:420px;
-  margin:0 auto;
-}
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
 
-/* generic block link/button */
-.block {
-  display:block;
-  text-align:center;
-  padding:14px;
-  border:none;
-  border-radius:12px;
-  background:#fff;
-  color:#111;
-  text-decoration:none;
-  font-weight:500;
-  box-shadow:
-    0 1px 2px rgba(0,0,0,.08),
-    0 6px 18px rgba(0,0,0,.10);
-  transition: box-shadow .2s ease, transform .2s ease, background .2s ease;
-}
-.block:hover {
-  transform: translateY(-1px);
-  background:#f7f7f7;
-  box-shadow:
-    0 2px 6px rgba(0,0,0,.10),
-    0 14px 28px rgba(0,0,0,.16);
-}
+  .block {
+    display: block;
+    text-align: center;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    background: #fff;
+    color: #111;
+    text-decoration: none;
+    font-weight: 500;
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.08),
+      0 6px 18px rgba(0,0,0,.10);
+    transition: box-shadow .2s ease, transform .2s ease, background .2s ease;
+  }
 
-/* danger variant */
-.block.danger {
-  color:#c02626;
-}
-.block.danger:hover {
-  background:#fff1f1;
-}
-.block.danger[type=submit] {
-  cursor:pointer;
-}
+  .block:hover {
+    transform: translateY(-1px);
+    background: #f7f7f7;
+    box-shadow:
+      0 2px 6px rgba(0,0,0,.10),
+      0 14px 28px rgba(0,0,0,.16);
+  }
+
+  .block.danger {
+    color: #c02626;
+  }
+
+  .block.danger:hover {
+    background: #fff1f1;
+  }
+
+  .block.danger[type=submit] {
+    cursor: pointer;
+  }
 </style>
+
 {% endblock %}

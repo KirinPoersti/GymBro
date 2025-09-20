@@ -3,10 +3,9 @@
 {% block header %}{% endblock %}
 
 {% block content %}
-<!-- Top bar -->
 <div class="topbar">
   <div class="brand-block">
-    <div class="brand">GymBro</div>
+    <div class="brand">🏋🏿GymBro</div>
     <div class="welcome">Hi, {{ session['username'] }} 👋</div>
   </div>
   <div class="actions">
@@ -16,21 +15,18 @@
   </div>
 </div>
 
-<!-- Month header controls -->
 <div class="monthbar">
   <a href="{{ url_for('dashboard', y=prev_y, m=prev_m) }}">← Previous</a>
   <div class="monthtitle">{{ year }} – {{ "%02d"|format(month) }}</div>
   <a href="{{ url_for('dashboard', y=next_y, m=next_m) }}">Next →</a>
 </div>
 
-<!-- Weekday headers -->
 <div class="wkhdr">
   {% for n in ["MON","TUE","WED","THU","FRI","SAT","SUN"] %}
     <div class="cell head">{{ n }}</div>
   {% endfor %}
 </div>
 
-<!-- 6x7 calendar grid -->
 <div class="grid">
   {% for d in grid %}
     {% set dim = (d.month != month) %}
@@ -58,7 +54,6 @@
   background:#A91B0D;
   color:#fff;
 
-  /* no border, soft shadow */
   border:none;
   box-shadow:
     0 1px 2px rgba(0,0,0,.10),
@@ -75,10 +70,9 @@
     font-weight:400; font-size:50px; line-height:1;
   }
   .cell.day.today{
-  outline: none;          /* remove the hard outline */
-  outline-offset: 0;      /* not needed anymore */
+  outline: none;          
+  outline-offset: 0;    
 
-  /* inner ring + keep elevation */
   box-shadow:
     inset 0 0 0 3px rgba(122,167,255,1),
     0 2px 6px rgba(0,0,0,.10),
@@ -109,29 +103,26 @@
   align-items: center;
   gap: 10px;
 }
-    /* === Buttons styled like calendar cells === */
   .icon-btn,
   .logout {
-    /* layout */
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
 
-    /* sizing */
-    padding: 8px 16px;      /* like cell padding */
+
+    padding: 8px 16px;   
     min-height: 40px;
     line-height: 1;
     font-size: 15px;
 
-    /* look */
     background: #fff;
     color: #111;
-    border: none;            /* no black border */
-    border-radius: 14px;     /* same radius as .cell */
+    border: none;            
+    border-radius: 14px;     
     text-decoration: none;
 
-    /* elevation + motion (match .cell) */
     box-shadow:
       0 1px 2px rgba(0,0,0,.08),
       0 8px 24px rgba(0,0,0,.10);
@@ -146,7 +137,6 @@
       0 14px 32px rgba(0,0,0,.16);
   }
 
-  /* Focus ring (accessible, same “today” blue tone) */
   .icon-btn:focus-visible,
   .logout:focus-visible {
     outline: none;
@@ -156,20 +146,17 @@
       0 14px 32px rgba(0,0,0,.16);
   }
 
-/* If you show icon-only squares, make them look like mini cells too */
 .icon-btn--square {
   padding: 8px;
   min-width: 40px;
   min-height: 40px;
 }
 
-/* Fix random underlines/shift on emoji or img icons */
 .icon-btn img,
 .icon-btn svg {
   display: block;
 }
 
-/* Instead, just add class="icon-btn" to Home to reuse the same look. */
   .icon-btn:hover, .logout:hover{
     background:#f5f5f5;
     box-shadow:
@@ -196,12 +183,11 @@
   .grid{ display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:94px; gap:10px; }
 
   .cell{
-    border:none; /* removed black border */
+    border:none; 
     border-radius:20px; background:#fff;
     display:flex; align-items:flex-start; justify-content:flex-start;
     padding:8px; text-decoration:none; color:#111; position:relative;
 
-    /* soft elevation */
     box-shadow:
       0 1px 2px rgba(0,0,0,.08),
       0 8px 24px rgba(0,0,0,.10);
