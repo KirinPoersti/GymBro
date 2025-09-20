@@ -26,7 +26,7 @@ The calendar highlights training days with ✓ and colors cells according to car
     - Profile page displays computed calorie/macronutrient targets.
 - [x] **Search functionality**: 
     - Exercise search with auto-suggestions
-      - Type into the exercise input to get Google-style suggestions
+      - Type into the exercise input to get suggestions
       - Filter by **muscle group** (Glutes, Shoulders, Quads, Chest, Hamstrings, Triceps, Calves, Biceps, Abs, Back)  
 - [x] **README with setup and testing instructions**.
 
