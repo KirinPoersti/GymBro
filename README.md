@@ -68,15 +68,7 @@ http://127.0.0.1:5000
 ```
 
 ## Potential Future Development 
-- Improved visuals
-- Modern UI with layered effects
 - Statistics dashboard
 - Weekly/monthly workout summaries
 - Charts for calories, macros, and weight changes
-- Exercise library expansion
 - Preloaded exercises with descriptions and images
-- Mobile optimization
-- Better support for smaller screens
-- Social features
-- Compare progress with friends
-- Share workouts

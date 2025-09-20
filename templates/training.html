@@ -19,6 +19,36 @@
 </div>
 
 <style>
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+
+    color: #111;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.08),
+      0 8px 24px rgba(0,0,0,.10);
+
+    transition:
+      box-shadow .2s ease,
+      transform .2s ease,
+      background .2s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    background: rgba(255,255,255,0.25);
+    box-shadow:
+      0 2px 6px rgba(0,0,0,.10),
+      0 14px 32px rgba(0,0,0,.16);
+  }
+
   .filter-row{
     display: flex;
     gap: 8px;
@@ -30,7 +60,7 @@
   .group-select,
   .ex-group{
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 6px 10px;
     background: #fff;
     font-size: 14px;
@@ -51,6 +81,24 @@
       0 2px 8px rgba(0,0,0,.12);
   }
 
+  .train-wrap{
+    width: 560px;
+    margin: 0 auto 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .train-title{ text-align: center; margin: 0 0 6px; }
+  .stack{ display: flex; flex-direction: column; gap: 16px; }
+  .brand{ font-size: 34px; text-decoration: none; color: #111; }
+
+  .actions-row{
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 6px;
+  }
+
   .ex-pill{
     display: inline-flex;
     align-items: center;
@@ -59,7 +107,7 @@
 
   .ex-name{
     border: none;
-    border-radius: 18px;
+    border-radius: 12px;
     background: #fff;
     height: 36px;
     line-height: 36px;
@@ -139,7 +187,7 @@
   .ex-card{
     width: 100%;
     border: none;
-    border-radius: 16px;
+    border-radius: 20px;
     background: #fff;
     padding: 16px;
     position: relative;
@@ -208,7 +256,7 @@
 
   .set-panel{
     border: none;
-    border-radius: 16px;
+    border-radius: 20px;
     background: #fff;
     padding: 18px;
     margin-top: 12px;
@@ -270,7 +318,7 @@
     width: 60px;
     height: 60px;
     border: none;
-    border-radius: 10px;
+    border-radius: 15px;
     background: #fff;
     cursor: pointer;
     font-size: 20px;
