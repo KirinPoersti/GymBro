@@ -9,85 +9,95 @@ app = Flask(__name__)
 app.secret_key = "change-me-in-production"  
 
 # --- Exercise catalog for typeahead (flattened names) ---
-EXERCISE_CATALOG = [
-    # Glutes
-    "Back Squat","Belt Squat","Box Pistol Squat","Bulgarian Split Squat, Barbell",
-    "Bulgarian Split Squat, Dumbbells","Bulgarian Split Squat, Smith Machine",
-    "Bulgarian Split Squat 1.5 Reps, Smith Machine","Deadlift","Deficit Deadlift",
-    "Deficit Sumo Deadlift","Elevated Goblet Squat","Elevated Goblet Squat 1.5 Reps",
-    "Forward Lunge with Barbell, One Leg at a Time","Front Squat","Glute Kickback",
-    "Glute Kickback, Machine","Goblet Squat","Hack Squat","Hack Squat, 1.5 Reps",
-    "Hip Abduction Machine","Hip Thrust","Hip Thrust Machine","Horizontal Leg Press",
-    "Leg Press","Machine Step-Up","Paused Back Squat","Paused Bulgarian Split Squat, Smith Machine",
-    "Paused Deadlift","Paused Sumo Deadlift","Pendulum Squat","Reverse Lunge with Barbell, One Leg at a Time",
-    "Reverse Super Squat","Romanian Deadlift","Romanian Sumo Deadlift","Safety Bar Squat",
-    "Single-Leg Hip Thrust","Single-Leg Machine Hip Thrust","Single-Leg Romanian Deadlift",
-    "Single-Leg Romanian Deadlift, Smith Machine","Single-Leg RDL, Kettlebell","Smith Machine Squat",
-    "Step-Up","Sumo Deadlift","Trap Bar Deadlift","Vertical Leg Press","Walking Lunges",
-
-    # Shoulders
-    "Arnold Press","Barbell Upright Row","Cable Cross Lateral Raise","Cable Lateral Raise",
-    "Dumbbell Lateral Raise","Dumbbell Lateral Raise, 1.5 Reps","Dumbbell Lateral Raise, Paused",
-    "Dumbbell Shoulder Press","Dumbbell Upright Row","Face Pull","Incline Dumbbell Lateral Raise",
-    "Leaning Cable Lateral Raise","Leaning Lateral Raise","Machine Lateral Raise","Machine Shoulder Press",
-    "Overhead Press","Rear Delt Machine","Seated Dumbbell Lateral Raise","Seated Dumbbell Shoulder Press",
-    "Single Arm Shoulder Press","Smith Machine Overhead Press","Standing Cable Row with Rope",
-
-    # Quads (Quadriceps)
-    "Back Squat","Belt Squat","Box Pistol Squat","Bulgarian Split Squat, Barbell",
-    "Bulgarian Split Squat, Dumbbells","Bulgarian Split Squat, Smith Machine",
-    "Bulgarian Split Squat 1.5 Reps, Smith Machine","Elevated Goblet Squat",
-    "Elevated Goblet Squat, 1.5 Reps","Forward Lunge with Barbell, One Leg at a Time","Front Squat",
-    "Goblet Squat","Hack Squat","Hack Squat, 1.5 Reps","Horizontal Leg Press","Leg Extension","Leg Press",
-    "Machine Step-Up","Paused Back Squat","Paused Bulgarian Split Squat, Smith Machine","Pendulum Squat",
-    "Reverse Lunge with Barbell, One Leg at a Time","Reverse Super Squat","Safety Bar Squat",
-    "Single Leg Extension","Single Leg Press","Smith Machine Squat","Step-Up","Vertical Leg Press","Walking Lunges",
-
-    # Chest
-    "Barbell Bench Press","Barbell Bench Press 1.5 Reps","Barbell Bench Press with Pause",
-    "Cable Chest Fly, Downward","Cable Chest Fly, Forward","Cable Chest Fly, Low to High",
-    "Chest Fly Machine","Chest Fly Machine, 1.5 Reps","Chest Press Machine","Close Grip Bench Press",
-    "Decline Push-Ups","Dips","Dumbbell Bench Press","Dumbbell Bench Press, Paused",
-    "Incline Dumbbell Bench Press","Incline Dumbbell Bench Press 1.5 Reps","Incline Dumbbell Fly",
-    "Incline Press Machine","Kneeling Push-Up","Machine Assisted Dip","Push-Ups","Smith Machine Incline Bench Press",
-
-    # Hamstrings
-    "Back Extension","Bar Extension Machine","Deadlift","Deficit Deadlift","Deficit Sumo Deadlift","Good Morning",
-    "Hip Adduction Machine","Lying Leg Curl","Romanian Deadlift","Romanian Sumo Deadlift","Seated Leg Curl",
-    "Single-Leg Lying Leg Curl","Single-Leg Romanian Deadlift","Single-Leg Romanian Deadlift, Smith Machine",
-    "Single-Leg Romanian Deadlift, Trap Bar","Single-Leg RDL, Kettlebell","Single-Leg Seated Leg Curl",
-    "Sumo Deadlift","Sumo Deadlift, Paused","Trap Bar Deadlift",
-
-    # Triceps
-    "Cable Tricep Kickback","Incline Tricep Extension, Dumbbell","JM Press","Lying Barbell Tricep Extension",
-    "Lying Tricep Extension, Dumbbell","Machine Tricep Extension","Overhead Barbell Tricep Extension",
-    "Overhead Cable Tricep Extension, Bar","Overhead Cable Tricep Extension, Rope",
-    "Single Arm Tricep Extension, Dumbbell","Triceps Pushdown, Rope","Triceps Pushdown, Straight Bar",
-
-    # Calves
-    "Horizontal Calf Press","Horizontal Calf Press Machine","Leg Press Calf Raise","Seated Calf Raise",
-    "Smith Machine Calf Raise","Standing Calf Machine",
-
-    # Biceps
-    "21s (21 Shot)","Barbell Curl","Barbell Reverse Curl","Bayesian Cable Curl","Cable Bicep Curl",
-    "Concentration Curl","Dumbbell Biceps Curl","Dumbbell Preacher Curl","Hammer Curl","Incline Dumbbell Curl",
-    "Incline Hammer Curl","Machine Biceps Curl","Preacher Curl",
-
-    # Abs
-    "Ab Rotations, Machine","Ab Wheel","Cable Crunch","Cable Oblique Twist","Cable Oblique Twist, High-to-Low",
-    "Hanging Knee Raise","Hanging Leg Raise to 90 Degrees","Hanging Leg Raises","Hanging Windshield Wipers",
-    "Incline Bench Sit-Up","Knee Raise, Supported","Knee-Supported Ab Rotation, Machine","Leg Raises, Supported",
-    "Lying Leg Raises","Pallof Press","Seated Machine Crunch","V Sit-Up","Weighted Ab Rotation",
-
-    # Back
-    "Band Assisted Chin-Up","Barbell Bent Over Row, Overhand Grip","Barbell Bent Over Row, Smith Machine",
-    "Barbell Bent Over Row, Underhand Grip","Barbell Shrug","Cable Lat Pullover","Cable Lat Pullover 1.5 Reps",
-    "Chest-Supported T-Bar Row","Chin-Ups","High Row","Lat Pulldown, Neutral Grip","Lat Pulldown, Underhand Grip",
-    "Low Row","Machine Chest Supported Row","Machine Chin-Up","Neutral Grip Chin-Up","Pull-Ups",
-    "Seal Row, Overhand Grip","Seal Row, Underhand Grip","Seated Cable Row","Seated Cable Row, Overhand Grip",
-    "Single-Arm Chest-Supported Row, Machine","Single-Arm Dumbbell Row","Single-Arm Lat Pulldown",
-    "Single-Arm Seated Cable Row","T-Bar Row",
-]
+EXERCISE_GROUPS = {
+    "Glutes": [
+        "Back Squat","Belt Squat","Box Pistol Squat","Bulgarian Split Squat, Barbell",
+        "Bulgarian Split Squat, Dumbbells","Bulgarian Split Squat, Smith Machine",
+        "Bulgarian Split Squat 1.5 Reps, Smith Machine","Deadlift","Deficit Deadlift",
+        "Deficit Sumo Deadlift","Elevated Goblet Squat","Elevated Goblet Squat 1.5 Reps",
+        "Forward Lunge with Barbell, One Leg at a Time","Front Squat","Glute Kickback",
+        "Glute Kickback, Machine","Goblet Squat","Hack Squat","Hack Squat, 1.5 Reps",
+        "Hip Abduction Machine","Hip Thrust","Hip Thrust Machine","Horizontal Leg Press",
+        "Leg Press","Machine Step-Up","Paused Back Squat","Paused Bulgarian Split Squat, Smith Machine",
+        "Paused Deadlift","Paused Sumo Deadlift","Pendulum Squat",
+        "Reverse Lunge with Barbell, One Leg at a Time","Reverse Super Squat","Romanian Deadlift",
+        "Romanian Sumo Deadlift","Safety Bar Squat","Single-Leg Hip Thrust",
+        "Single-Leg Machine Hip Thrust","Single-Leg Romanian Deadlift",
+        "Single-Leg Romanian Deadlift, Smith Machine","Single-Leg RDL, Kettlebell",
+        "Smith Machine Squat","Step-Up","Sumo Deadlift","Trap Bar Deadlift",
+        "Vertical Leg Press","Walking Lunges",
+    ],
+    "Shoulders": [
+        "Arnold Press","Barbell Upright Row","Cable Cross Lateral Raise","Cable Lateral Raise",
+        "Dumbbell Lateral Raise","Dumbbell Lateral Raise, 1.5 Reps","Dumbbell Lateral Raise, Paused",
+        "Dumbbell Shoulder Press","Dumbbell Upright Row","Face Pull","Incline Dumbbell Lateral Raise",
+        "Leaning Cable Lateral Raise","Leaning Lateral Raise","Machine Lateral Raise",
+        "Machine Shoulder Press","Overhead Press","Rear Delt Machine",
+        "Seated Dumbbell Lateral Raise","Seated Dumbbell Shoulder Press",
+        "Single Arm Shoulder Press","Smith Machine Overhead Press","Standing Cable Row with Rope",
+    ],
+    "Quads": [
+        "Back Squat","Belt Squat","Box Pistol Squat","Bulgarian Split Squat, Barbell",
+        "Bulgarian Split Squat, Dumbbells","Bulgarian Split Squat, Smith Machine",
+        "Bulgarian Split Squat 1.5 Reps, Smith Machine","Elevated Goblet Squat",
+        "Elevated Goblet Squat, 1.5 Reps","Forward Lunge with Barbell, One Leg at a Time","Front Squat",
+        "Goblet Squat","Hack Squat","Hack Squat, 1.5 Reps","Horizontal Leg Press","Leg Extension","Leg Press",
+        "Machine Step-Up","Paused Back Squat","Paused Bulgarian Split Squat, Smith Machine","Pendulum Squat",
+        "Reverse Lunge with Barbell, One Leg at a Time","Reverse Super Squat","Safety Bar Squat",
+        "Single Leg Extension","Single Leg Press","Smith Machine Squat","Step-Up","Vertical Leg Press","Walking Lunges",
+    ],
+    "Chest": [
+        "Barbell Bench Press","Barbell Bench Press 1.5 Reps","Barbell Bench Press with Pause",
+        "Cable Chest Fly, Downward","Cable Chest Fly, Forward","Cable Chest Fly, Low to High",
+        "Chest Fly Machine","Chest Fly Machine, 1.5 Reps","Chest Press Machine",
+        "Close Grip Bench Press","Decline Push-Ups","Dips","Dumbbell Bench Press",
+        "Dumbbell Bench Press, Paused","Incline Dumbbell Bench Press",
+        "Incline Dumbbell Bench Press 1.5 Reps","Incline Dumbbell Fly","Incline Press Machine",
+        "Kneeling Push-Up","Machine Assisted Dip","Push-Ups","Smith Machine Incline Bench Press",
+    ],
+    "Hamstrings": [
+        "Back Extension","Bar Extension Machine","Deadlift","Deficit Deadlift","Deficit Sumo Deadlift",
+        "Good Morning","Hip Adduction Machine","Lying Leg Curl","Romanian Deadlift",
+        "Romanian Sumo Deadlift","Seated Leg Curl","Single-Leg Lying Leg Curl",
+        "Single-Leg Romanian Deadlift","Single-Leg Romanian Deadlift, Smith Machine",
+        "Single-Leg Romanian Deadlift, Trap Bar","Single-Leg RDL, Kettlebell",
+        "Single-Leg Seated Leg Curl","Sumo Deadlift","Sumo Deadlift, Paused","Trap Bar Deadlift",
+    ],
+    "Triceps": [
+        "Cable Tricep Kickback","Incline Tricep Extension, Dumbbell","JM Press",
+        "Lying Barbell Tricep Extension","Lying Tricep Extension, Dumbbell","Machine Tricep Extension",
+        "Overhead Barbell Tricep Extension","Overhead Cable Tricep Extension, Bar",
+        "Overhead Cable Tricep Extension, Rope","Single Arm Tricep Extension, Dumbbell",
+        "Triceps Pushdown, Rope","Triceps Pushdown, Straight Bar",
+    ],
+    "Calves": [
+        "Horizontal Calf Press","Horizontal Calf Press Machine","Leg Press Calf Raise",
+        "Seated Calf Raise","Smith Machine Calf Raise","Standing Calf Machine",
+    ],
+    "Biceps": [
+        "21s (21 Shot)","Barbell Curl","Barbell Reverse Curl","Bayesian Cable Curl",
+        "Cable Bicep Curl","Concentration Curl","Dumbbell Biceps Curl",
+        "Dumbbell Preacher Curl","Hammer Curl","Incline Dumbbell Curl","Incline Hammer Curl",
+        "Machine Biceps Curl","Preacher Curl",
+    ],
+    "Abs": [
+        "Ab Rotations, Machine","Ab Wheel","Cable Crunch","Cable Oblique Twist",
+        "Cable Oblique Twist, High-to-Low","Hanging Knee Raise","Hanging Leg Raise to 90 Degrees",
+        "Hanging Leg Raises","Hanging Windshield Wipers","Incline Bench Sit-Up","Knee Raise, Supported",
+        "Knee-Supported Ab Rotation, Machine","Leg Raises, Supported","Lying Leg Raises",
+        "Pallof Press","Seated Machine Crunch","V Sit-Up","Weighted Ab Rotation",
+    ],
+    "Back": [
+        "Band Assisted Chin-Up","Barbell Bent Over Row, Overhand Grip",
+        "Barbell Bent Over Row, Smith Machine","Barbell Bent Over Row, Underhand Grip","Barbell Shrug",
+        "Cable Lat Pullover","Cable Lat Pullover 1.5 Reps","Chest-Supported T-Bar Row","Chin-Ups","High Row",
+        "Lat Pulldown, Neutral Grip","Lat Pulldown, Underhand Grip","Low Row","Machine Chest Supported Row",
+        "Machine Chin-Up","Neutral Grip Chin-Up","Pull-Ups","Seal Row, Overhand Grip","Seal Row, Underhand Grip",
+        "Seated Cable Row","Seated Cable Row, Overhand Grip","Single-Arm Chest-Supported Row, Machine",
+        "Single-Arm Dumbbell Row","Single-Arm Lat Pulldown","Single-Arm Seated Cable Row","T-Bar Row",
+    ],
+}
+EXERCISE_CATALOG = [name for group in EXERCISE_GROUPS.values() for name in group]
 
 @app.route("/")
 def home():
@@ -543,10 +553,16 @@ def api_exercises():
     if not session.get("user_id"):
         return jsonify([]), 401
     q = (request.args.get("q") or "").strip().lower()
+    group = (request.args.get("group") or "All").strip()
+    if group and group != "All" and group in EXERCISE_GROUPS:
+        source = EXERCISE_GROUPS[group]
+    else:
+        source = EXERCISE_CATALOG
+
     if not q:
         return jsonify([])
     scored = []
-    for name in EXERCISE_CATALOG:
+    for name in source:
         ln = name.lower()
         if q in ln:
             scored.append(((ln.find(q), len(ln)), name))

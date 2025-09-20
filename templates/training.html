@@ -3,6 +3,7 @@
 {% block header %}{% endblock %}
 {% block content %}
 
+
 <div class="topbar">
   <div class="brand">GymBro</div>
 </div>
@@ -19,21 +20,58 @@
 </div>
 
 <style>
-  .typeahead {
-    position: absolute;
-    z-index: 20;
-    background: #fff;
-    border: 1.5px solid #222;
-    border-radius: 10px;
-    box-shadow: 0 10px 24px rgba(0,0,0,.12);
-    margin-top: 4px;
-    overflow: hidden;
-    max-height: 260px;
-    overflow-y: auto;
-    left: 50%;
-    transform: translateX(-50%); 
-    min-width: 280px;            
+  .filter-row{
+  display:flex; gap:8px; align-items:center; justify-content:center;
+  margin-bottom: 6px;
+}
+  .group-select{
+    border:1.5px solid #222; border-radius:8px; padding:6px 10px; background:#fff;
   }
+.ex-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ex-group {
+  border: 1.5px solid #222;
+  border-radius: 10px;
+  background: #fff;
+  height: 36px;
+  padding: 0 10px;
+  font-size: 14px;
+  outline: none;
+}
+.ex-name {
+  border: 1.5px solid #222;
+  border-radius: 18px;
+  background: #fff;
+  height: 36px;
+  line-height: 36px;
+  padding: 0 12px;
+  font-size: 16px;
+  text-align: center;
+  outline: none;
+  width: auto; 
+  display: inline-block;
+}
+
+.ex-name-wrap { display:flex; justify-content:center; }
+
+.typeahead {
+  position: absolute;
+  z-index: 20;
+  background: #fff;
+  border: 1.5px solid #222;
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.12);
+  margin-top: 4px;
+  overflow: hidden;
+  max-height: 260px;
+  overflow-y: auto;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 320px;
+}
   .typeahead-item {
   padding: 8px 10px;
   cursor: pointer;
@@ -151,6 +189,13 @@
 </style>
 
 <script>
+  let currentGroup = 'All';
+  const mg = document.getElementById('muscle-group');
+  if (mg) {
+    mg.addEventListener('change', (e) => {
+      currentGroup = e.target.value || 'All';
+    });
+  }
   const initial = {{ exercises|tojson }};
   const list = document.getElementById('ex-list');
 
@@ -169,67 +214,65 @@
   let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 };
 
-function attachTypeahead(input){
-  if (input._hasTypeahead) return;
-  input._hasTypeahead = true;
+  function attachTypeahead(input, getGroup){
+    if (input._hasTypeahead) return;
+    input._hasTypeahead = true;
 
-  const wrap = input.closest('.typeahead-wrap') || input.parentElement;
-  const dd = document.createElement('div');
-  dd.className = 'typeahead';
-  dd.style.display = 'none';
-  wrap.appendChild(dd);
+    const wrap = input.closest('.typeahead-wrap') || input.parentElement;
+    const dd = document.createElement('div');
+    dd.className = 'typeahead';
+    dd.style.display = 'none';
+    wrap.appendChild(dd);
 
-  let activeIndex = -1;
-  let items = [];
+    let activeIndex = -1;
+    let items = [];
 
-  const show = () => { dd.style.display = items.length ? 'block' : 'none'; };
-  const hide = () => { dd.style.display = 'none'; activeIndex = -1; };
+    const show = () => { dd.style.display = items.length ? 'block' : 'none'; };
+    const hide = () => { dd.style.display = 'none'; activeIndex = -1; };
 
-  const renderDD = (list=[]) => {
-    items = list;
-    dd.innerHTML = '';
-    items.forEach((name, i) => {
-      const el = document.createElement('div');
-      el.className = 'typeahead-item' + (i === activeIndex ? ' active' : '');
-      el.textContent = name;
-      el.onclick = () => { input.value = name; input.dispatchEvent(new Event('input')); hide(); };
-      dd.appendChild(el);
+    const renderDD = (list=[]) => {
+      items = list;
+      dd.innerHTML = '';
+      items.forEach((name, i) => {
+        const el = document.createElement('div');
+        el.className = 'typeahead-item' + (i === activeIndex ? ' active' : '');
+        el.textContent = name;
+        el.onclick = () => { input.value = name; input.dispatchEvent(new Event('input')); hide(); };
+        dd.appendChild(el);
+      });
+      show();
+    };
+
+    const fetchSuggestions = debounce(async (q) => {
+      if (!q.trim()) { renderDD([]); return; }
+      const group = (getGroup && getGroup()) || 'All';
+      try {
+        const r = await fetch(`/api/exercises?q=${encodeURIComponent(q)}&group=${encodeURIComponent(group)}`);
+        if (!r.ok) { renderDD([]); return; }
+        const data = await r.json();
+        renderDD(data);
+      } catch { renderDD([]); }
+    }, 120);
+
+    input.addEventListener('input', (e) => { activeIndex = -1; fetchSuggestions(e.target.value); });
+
+    input.addEventListener('keydown', (e) => {
+      if (dd.style.display === 'none') return;
+      const total = items.length; if (!total) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); activeIndex = (activeIndex + 1) % total; updateActive(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndex = (activeIndex - 1 + total) % total; updateActive(); }
+      else if (e.key === 'Enter') {
+        if (activeIndex >= 0) { e.preventDefault(); input.value = items[activeIndex]; input.dispatchEvent(new Event('input')); hide(); }
+      } else if (e.key === 'Escape') { hide(); }
     });
-    show();
-  };
 
-  const fetchSuggestions = debounce(async (q) => {
-    if (!q.trim()) { renderDD([]); return; }
-    try {
-      const r = await fetch(`/api/exercises?q=${encodeURIComponent(q)}`);
-      if (!r.ok) { renderDD([]); return; }
-      const data = await r.json();
-      renderDD(data);
-    } catch {
-      renderDD([]);
+    function updateActive(){
+      [...dd.children].forEach((el, idx) => el.classList.toggle('active', idx === activeIndex));
     }
-  }, 120);
 
-  input.addEventListener('input', (e) => { activeIndex = -1; fetchSuggestions(e.target.value); });
-
-  input.addEventListener('keydown', (e) => {
-    if (dd.style.display === 'none') return;
-    const total = items.length; if (!total) return;
-
-    if (e.key === 'ArrowDown') { e.preventDefault(); activeIndex = (activeIndex + 1) % total; updateActive(); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndex = (activeIndex - 1 + total) % total; updateActive(); }
-    else if (e.key === 'Enter') {
-      if (activeIndex >= 0) { e.preventDefault(); input.value = items[activeIndex]; input.dispatchEvent(new Event('input')); hide(); }
-    } else if (e.key === 'Escape') { hide(); }
-  });
-
-  function updateActive(){
-    [...dd.children].forEach((el, idx) => el.classList.toggle('active', idx === activeIndex));
+    input.addEventListener('blur', () => setTimeout(hide, 120));
+    dd.addEventListener('mousedown', (e) => e.preventDefault());
   }
-
-  input.addEventListener('blur', () => setTimeout(hide, 120));
-  dd.addEventListener('mousedown', (e) => e.preventDefault());
-}
 
   function render(){
     list.innerHTML = '';
@@ -242,22 +285,41 @@ function attachTypeahead(input){
 
         <div class="ex-body">
           <div class="ex-name-wrap">
-            <div class="typeahead-wrap">
-                <input class="ex-name" placeholder="Exercise" value="${ex.name || ''}">
+            <div class="typeahead-wrap ex-pill">
+              <select class="ex-group">
+                <option>All</option>
+                <option>Glutes</option>
+                <option>Shoulders</option>
+                <option>Quads</option>
+                <option>Chest</option>
+                <option>Hamstrings</option>
+                <option>Triceps</option>
+                <option>Calves</option>
+                <option>Biceps</option>
+                <option>Abs</option>
+                <option>Back</option>
+              </select>
+              <input class="ex-name" placeholder="Exercise" value="${ex.name || ''}">
             </div>
           </div>
-
           <div class="set-list" id="sets-${idx}"></div>
 
           <button class="add-set-bottom" data-addset="${idx}">+</button>
         </div>
       `;
       list.appendChild(card);
-
+      
       const nameInput = card.querySelector('.ex-name');
       nameInput.oninput = e => { ex.name = e.target.value; sizePill(nameInput); };
       wirePillAutosize(nameInput);
-      attachTypeahead(nameInput);
+      attachTypeahead(nameInput, () => ex.group || 'All');
+      
+      const groupSel = card.querySelector('.ex-group');
+      groupSel.value = ex.group || 'All';
+      groupSel.onchange = e => {
+        ex.group = e.target.value || 'All';
+        nameInput.dispatchEvent(new Event('input'));
+      };
 
       card.querySelector('.kill-ex').onclick = () => { state.exercises.splice(idx, 1); render(); };
 
@@ -294,8 +356,10 @@ function attachTypeahead(input){
   const state = { exercises: (initial && initial.length ? initial : [{ name:'', sets:[] }]) };
   render();
 
-  document.getElementById('add-ex').onclick = () => { state.exercises.push({ name:'', sets:[] }); render(); };
-
+  document.getElementById('add-ex').onclick = () => {
+    state.exercises.push({ name:'', sets:[] });
+    render();
+  };
   document.getElementById('save').onclick = async () => {
     const payload = {
       exercises: state.exercises
