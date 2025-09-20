@@ -19,6 +19,33 @@
 </div>
 
 <style>
+  .typeahead {
+    position: absolute;
+    z-index: 20;
+    background: #fff;
+    border: 1.5px solid #222;
+    border-radius: 10px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.12);
+    margin-top: 4px;
+    overflow: hidden;
+    max-height: 260px;
+    overflow-y: auto;
+    left: 50%;
+    transform: translateX(-50%); 
+    min-width: 280px;            
+  }
+  .typeahead-item {
+  padding: 8px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+  .typeahead-item:hover, .typeahead-item.active { background: #f3f4f6; }
+  .typeahead-wrap {
+    position: relative;
+    display: inline-block;
+}
   .train-wrap{
     width:560px;
     margin:0 auto 24px;
@@ -56,19 +83,28 @@
     display:flex; flex-direction:column; align-items:center; gap:5px;
   }
   .set-list{ width:100%; }
-
-  .ex-name-wrap{ display:flex; justify-content:center; }
-  .ex-name-pill{
-    display:inline-flex; align-items:center; justify-content:center;
-    border:1.5px solid #222; border-radius:18px; background:#fff;
-    height:36px; padding-top:8.5px; width:auto;
+  .ex-name {
+    border: 1.5px solid #222;
+    border-radius: 18px;
+    background: #fff;
+    height: 36px;
+    line-height: 36px;
+    padding: 0 12px;
+    font-size: 16px;
+    text-align: center;
+    outline: none;
+    width: auto;             
+    display: inline-block;
   }
+  .ex-name-wrap{ display:flex; justify-content:center; }
   .ex-name-input{
     border:0; outline:none; background:transparent;
     font-size:16px; text-align:center;
     width:auto; height:36px; line-height:36px;
   }
-
+  .ex-name:focus {
+    box-shadow: 0 0 0 3px rgba(122,167,255,.35);
+  }
   .set-panel{
     border:1.5px solid #222; border-radius:16px; background:#fff;
     padding:18px; margin-top:12px; position:relative;
@@ -122,12 +158,78 @@
     const min = 80, max = 420;
     const text = input.value || input.placeholder || '';
     const w = Math.max(min, Math.min(max, 22 + text.length * 9));
-    input.closest('.ex-name-pill').style.width = w + 'px';
+    input.style.width = w + 'px';
   }
   function wirePillAutosize(input){
     sizePill(input);
     input.addEventListener('input', () => sizePill(input));
   }
+
+  const debounce = (fn, ms=150) => {
+  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+};
+
+function attachTypeahead(input){
+  if (input._hasTypeahead) return;
+  input._hasTypeahead = true;
+
+  const wrap = input.closest('.typeahead-wrap') || input.parentElement;
+  const dd = document.createElement('div');
+  dd.className = 'typeahead';
+  dd.style.display = 'none';
+  wrap.appendChild(dd);
+
+  let activeIndex = -1;
+  let items = [];
+
+  const show = () => { dd.style.display = items.length ? 'block' : 'none'; };
+  const hide = () => { dd.style.display = 'none'; activeIndex = -1; };
+
+  const renderDD = (list=[]) => {
+    items = list;
+    dd.innerHTML = '';
+    items.forEach((name, i) => {
+      const el = document.createElement('div');
+      el.className = 'typeahead-item' + (i === activeIndex ? ' active' : '');
+      el.textContent = name;
+      el.onclick = () => { input.value = name; input.dispatchEvent(new Event('input')); hide(); };
+      dd.appendChild(el);
+    });
+    show();
+  };
+
+  const fetchSuggestions = debounce(async (q) => {
+    if (!q.trim()) { renderDD([]); return; }
+    try {
+      const r = await fetch(`/api/exercises?q=${encodeURIComponent(q)}`);
+      if (!r.ok) { renderDD([]); return; }
+      const data = await r.json();
+      renderDD(data);
+    } catch {
+      renderDD([]);
+    }
+  }, 120);
+
+  input.addEventListener('input', (e) => { activeIndex = -1; fetchSuggestions(e.target.value); });
+
+  input.addEventListener('keydown', (e) => {
+    if (dd.style.display === 'none') return;
+    const total = items.length; if (!total) return;
+
+    if (e.key === 'ArrowDown') { e.preventDefault(); activeIndex = (activeIndex + 1) % total; updateActive(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndex = (activeIndex - 1 + total) % total; updateActive(); }
+    else if (e.key === 'Enter') {
+      if (activeIndex >= 0) { e.preventDefault(); input.value = items[activeIndex]; input.dispatchEvent(new Event('input')); hide(); }
+    } else if (e.key === 'Escape') { hide(); }
+  });
+
+  function updateActive(){
+    [...dd.children].forEach((el, idx) => el.classList.toggle('active', idx === activeIndex));
+  }
+
+  input.addEventListener('blur', () => setTimeout(hide, 120));
+  dd.addEventListener('mousedown', (e) => e.preventDefault());
+}
 
   function render(){
     list.innerHTML = '';
@@ -140,8 +242,8 @@
 
         <div class="ex-body">
           <div class="ex-name-wrap">
-            <div class="ex-name-pill">
-              <input class="ex-name-input" placeholder="Exercise" value="${ex.name || ''}">
+            <div class="typeahead-wrap">
+                <input class="ex-name" placeholder="Exercise" value="${ex.name || ''}">
             </div>
           </div>
 
@@ -152,10 +254,10 @@
       `;
       list.appendChild(card);
 
-
-      const nameInput = card.querySelector('.ex-name-input');
+      const nameInput = card.querySelector('.ex-name');
       nameInput.oninput = e => { ex.name = e.target.value; sizePill(nameInput); };
       wirePillAutosize(nameInput);
+      attachTypeahead(nameInput);
 
       card.querySelector('.kill-ex').onclick = () => { state.exercises.splice(idx, 1); render(); };
 
