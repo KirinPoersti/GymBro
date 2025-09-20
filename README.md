@@ -22,27 +22,32 @@ The calendar highlights training days with ✓ and colors cells according to car
 - [ ] **Search functionality**: not implemented yet (see “Search functionality” below).
 - [x] **README with setup and testing instructions**.
 
-⚠️ **Important repo hygiene:**  
-Do **not** commit `database.db` to the repository. The database should be created locally from `schema.sql`.
-
 ---
 
 ## Requirements
 
 - Python 3.10+
 - `sqlite3` command-line tool (for initializing the DB)
-- Works on Linux, macOS, Windows
+- Developed on Windows11
 
 ---
 
-## Installation and running
+## Installation
 
-### 1. Clone repo & create virtual environment
+Install the `flask` library:
 
-**Linux/macOS**
-```bash
-git clone https://github.com/KirinPoersti/GymBro.git
-cd GymBro
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt  # or: pip install flask werkzeug
+```
+$ pip install flask
+```
+
+Create the database tables:
+
+```
+$ sqlite3 database.db < schema.sql
+```
+
+Run the application:
+
+```
+$ flask run
+```
