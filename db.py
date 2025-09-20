@@ -1,13 +1,11 @@
 import os, sqlite3
 
-# Configurable path (use env var or default to database.db)
 DB_PATH = os.environ.get("GYMBRO_DB", "database.db")
 
 def _connect():
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # dict-like rows
-    # Ensure foreign keys are enforced
-    conn.execute("PRAGMA foreign_keys = ON;")
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON;")  
     return conn
 
 def execute(sql: str, params=()):

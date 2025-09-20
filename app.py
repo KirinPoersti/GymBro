@@ -458,49 +458,120 @@ def training(d):
     return render_template("training.html", d=d, exercises=exercises_payload)
 
 # -------- Meal --------
+# -------- Meal --------
 @app.route("/day/<d>/meals", methods=["GET", "POST"])
 def meals_view(d):
     if not session.get("user_id"):
         return redirect(url_for("login"))
     uid = session["user_id"]
 
-    from datetime import date as _d
+    # validate date (YYYY-MM-DD)
     try:
         y, m, dd = map(int, d.split("-"))
-        _ = _d(y, m, dd)
+        _ = date(y, m, dd)
     except Exception:
         abort(404)
 
+    # --- helpers ---
+    def _to_float_none(x):
+        if x in (None, ""): return None
+        try: return float(str(x).replace(",", "."))
+        except Exception: return None
+
+    def _to_int_none(x):
+        f = _to_float_none(x)
+        return int(f) if f is not None else None
+
+    # --- schema detection (do this ONCE; used by POST and GET) ---
+    mi_cols = {c["name"] for c in db.query("PRAGMA table_info(meal_items)")}
+    MI_HAS_NAME = "name" in mi_cols
+    MI_HAS_FOOD = "food" in mi_cols
+
     if request.method == "POST":
         data = request.get_json(silent=True) or {}
-        meals = data.get("meals", [])
+        meals_payload = data.get("meals", []) or []
 
+        # Ensure a day row exists (only if we actually save something)
         day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
         if not day:
             db.execute("INSERT INTO meal_days (user_id, d) VALUES (?, ?)", (uid, d))
             day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
 
+        # wipe & replace
         db.execute("DELETE FROM meal_items WHERE meal_id IN (SELECT id FROM meals WHERE day_id=?)", (day["id"],))
         db.execute("DELETE FROM meals WHERE day_id=?", (day["id"],))
 
-        for i, meal in enumerate(meals):
-            name = (meal.get("name") or "").strip()
-            db.execute("INSERT INTO meals (day_id, name, ord) VALUES (?, ?, ?)", (day["id"], name, i))
-            meal_id = db.query_one("SELECT id FROM meals WHERE day_id=? AND ord=?", (day["id"], i))["id"]
-            for it in meal.get("items", []):
-                p = float(it.get("protein") or 0)
-                c = float(it.get("carbs") or 0)
-                k = int(float(it.get("calories") or 0))
-                db.execute("INSERT INTO meal_items (meal_id, protein, carbs, calories) VALUES (?,?,?,?)",
-                           (meal_id, p, c, k))
+        saved_meals = 0
+
+        for i, meal in enumerate(meals_payload):
+            meal_name = (meal.get("name") or "").strip()
+            raw_items = meal.get("items", []) or []
+
+            # Filter & normalize items (keep if any field present)
+            items_in = []
+            for it in raw_items:
+                nm = (it.get("name") or "").strip()
+                p  = _to_float_none(it.get("protein"))
+                c  = _to_float_none(it.get("carbs"))
+                k  = _to_int_none(it.get("calories"))
+                if nm or p is not None or c is not None or k is not None:
+                    items_in.append({"name": nm, "protein": p or 0.0, "carbs": c or 0.0, "calories": k or 0})
+
+            # Skip totally empty meals
+            if not meal_name and not items_in:
+                continue
+
+            # Insert meal
+            db.execute("INSERT INTO meals (day_id, name, ord) VALUES (?, ?, ?)", (day["id"], meal_name, i))
+            meal_id = db.query_one(
+                "SELECT id FROM meals WHERE day_id=? AND ord=?",
+                (day["id"], i)
+            )["id"]
+            saved_meals += 1
+
+            # Insert items (support legacy 'food' column)
+            for it in items_in:
+                name_to_save = (it["name"] or "").strip()
+                if MI_HAS_NAME:
+                    db.execute(
+                        "INSERT INTO meal_items (meal_id, name, protein, carbs, calories) VALUES (?,?,?,?,?)",
+                        (meal_id, name_to_save, it["protein"], it["carbs"], it["calories"])
+                    )
+                elif MI_HAS_FOOD:
+                    if name_to_save == "":
+                        name_to_save = "-"  # ensure NOT NULL for legacy 'food'
+                    db.execute(
+                        "INSERT INTO meal_items (meal_id, food, protein, carbs, calories) VALUES (?,?,?,?,?)",
+                        (meal_id, name_to_save, it["protein"], it["carbs"], it["calories"])
+                    )
+                else:
+                    db.execute(
+                        "INSERT INTO meal_items (meal_id, protein, carbs, calories) VALUES (?,?,?,?)",
+                        (meal_id, it["protein"], it["carbs"], it["calories"])
+                    )
+
+        # If nothing meaningful saved, remove the day row entirely
+        if saved_meals == 0:
+            db.execute("DELETE FROM meal_days WHERE id=?", (day["id"],))
+
         return jsonify({"ok": True})
 
+    # GET: load
     day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
     meals = []
     if day:
-        for m in db.query("SELECT id, name FROM meals WHERE day_id=? ORDER BY ord", (day["id"],)):
-            items = db.query("SELECT protein, carbs, calories FROM meal_items WHERE meal_id=?", (m["id"],))
-            meals.append({"name": m["name"], "items": items})
+        for mrow in db.query("SELECT id, name FROM meals WHERE day_id=? ORDER BY ord", (day["id"],)):
+            if MI_HAS_NAME and MI_HAS_FOOD:
+                q = "SELECT COALESCE(name, food) AS name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
+            elif MI_HAS_NAME:
+                q = "SELECT name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
+            elif MI_HAS_FOOD:
+                q = "SELECT food AS name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
+            else:
+                q = "SELECT '' AS name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
+            items = db.query(q, (mrow["id"],))
+            meals.append({"name": mrow["name"], "items": items})
+
     return render_template("meals.html", d=d, meals=meals)
 
 if __name__ == "__main__":
