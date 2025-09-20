@@ -27,7 +27,6 @@
     margin-bottom: 6px;
   }
 
-  /* group select (and legacy .group-select) — borderless + shadow */
   .group-select,
   .ex-group{
     border: none;
@@ -58,7 +57,6 @@
     gap: 8px;
   }
 
-  /* exercise name pill (flat, no shadow so it doesn’t float over the card) */
   .ex-name{
     border: none;
     border-radius: 18px;
@@ -72,7 +70,6 @@
     display: inline-block;
     outline: none;
 
-    /* give it pill shadow like other inputs */
     box-shadow:
       0 1px 2px rgba(0,0,0,.08),
       0 8px 20px rgba(0,0,0,.08);
@@ -95,7 +92,6 @@
     justify-content: center;
   }
 
-  /* typeahead dropdown — borderless + shadow */
   .typeahead-wrap{
     position: relative;
     display: inline-block;
@@ -140,7 +136,6 @@
   .stack{ display: flex; flex-direction: column; gap: 16px; }
   .brand{ font-size: 34px; text-decoration: none; color: #111; }
 
-  /* cards + panels — borderless + shadows */
   .ex-card{
     width: 100%;
     border: none;
@@ -171,7 +166,6 @@
     margin-top: 6px;
   }
 
-  /* kill buttons — soft buttons */
   .kill-ex,
   .kill-set{
     position: absolute;
@@ -235,7 +229,6 @@
 
   .set-title{ text-align: center; margin-bottom: 16px; }
 
-  /* macro squares */
   .set-grid{ display: flex; gap: 32px; justify-content: center; }
   .big-square{
     width: 60px;
@@ -329,8 +322,7 @@
   const list = document.getElementById('ex-list');
 
   function sizePill(input){
-    // Smaller default; hugs “Exercise” nicely
-    const min  = 110;          // default width for ex-name
+    const min  = 110;          
     const max  = 420;
     const text = input.value || input.placeholder || '';
     const w    = Math.max(min, Math.min(max, 18 + text.length * 9));
