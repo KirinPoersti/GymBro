@@ -207,7 +207,6 @@ def login():
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             session["email"] = user["email"]
-            flash("Signed in!")
             return redirect(url_for("dashboard"))
 
         flash("Invalid username or password.")

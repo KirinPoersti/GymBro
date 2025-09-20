@@ -4,6 +4,12 @@
   <meta charset="utf-8" />
   <title>🏋🏿GymBro</title>
 
+  <link rel="preload"
+        as="image"
+        href="{{ url_for('static', filename='img/bg_light.png') }}"
+        imagesrcset="{{ url_for('static', filename='img/bg_light.png') }} 1x"
+        fetchpriority="high">
+
   <style>
     html, body, h1, h2, h3, h4, h5, h6,
     form, label, input, button, select, textarea,
@@ -12,7 +18,7 @@
     }
 
     body {
-      background: #fafafa;
+      background: rgba(58,124,181);
       background-image: url("{{ url_for('static', filename='img/bg_light.png') }}");
       background-size: cover;         
       background-position: center;     
@@ -20,12 +26,24 @@
       background-attachment: fixed;    
     }
 
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-1;              
+      pointer-events:none;      
+      background-image: url("{{ url_for('static', filename='img/bg_light.png') }}");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity:1;               
+      will-change: transform;   
+    }
     .wrap {
       max-width: 360px;
       margin: 48px auto;
       padding: 28px;
       border-radius: 50px;
-
 
       background: transparent;
 
