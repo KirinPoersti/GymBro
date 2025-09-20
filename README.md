@@ -1,4 +1,4 @@
-# GymBro
+# 🏋🏿 GymBro
 
 GymBro is a lightweight **Flask** application for logging **workouts** and **meals**.  
 Users can register, log in, maintain a **profile** (height, weight, age, activity level, sex, goal), and log **workouts** (exercises + sets) as well as **meals** (meals + food items + macros).  
@@ -7,7 +7,7 @@ The calendar highlights training days with ✓ and colors cells according to car
 
 ---
 
-## Features (assignment check)
+## 🚀 Features (assignment check)
 
 - [x] **User registration and login** (`/register`, `/login`, with password hashing).
 - [x] **Add, edit, delete entities**:
@@ -40,7 +40,7 @@ The calendar highlights training days with ✓ and colors cells according to car
 
 ---
 
-## Installation
+## 🛠 Installation
 
 Install the `flask` library:
 
@@ -66,3 +66,17 @@ Open in Browser:
 ```
 http://127.0.0.1:5000
 ```
+
+## Potential Future Development 
+- Improved visuals
+- Modern UI with layered effects
+- Statistics dashboard
+- Weekly/monthly workout summaries
+- Charts for calories, macros, and weight changes
+- Exercise library expansion
+- Preloaded exercises with descriptions and images
+- Mobile optimization
+- Better support for smaller screens
+- Social features
+- Compare progress with friends
+- Share workouts
