@@ -13,25 +13,30 @@
 
     body {
       background: #fafafa;
-      background-image: radial-gradient(#ddd 1px, transparent 1px);
-      background-size: 24px 24px;
+      background-image: url("{{ url_for('static', filename='img/bg_light.png') }}");
+      background-size: cover;         
+      background-position: center;     
+      background-repeat: no-repeat;   
+      background-attachment: fixed;    
     }
 
     .wrap {
       max-width: 360px;
       margin: 48px auto;
       padding: 28px;
-      border-radius: 14px;
-      background: #fff;
+      border-radius: 50px;
+
+
+      background: transparent;
+
+      position: relative;      
+      overflow: hidden;       
 
       box-shadow:
         0 1px 2px rgba(0,0,0,.06),
         0 12px 36px rgba(0,0,0,.10);
     }
-    .wrap--wide {
-      max-width: 900px;
-      padding: 30px;
-    }
+    .wrap--wide { max-width: 900px; padding: 30px; }
 
     .title {
       margin: 0 0 20px;
@@ -158,35 +163,81 @@
         0 2px 6px rgba(0,0,0,.10),
         0 14px 32px rgba(0,0,0,.16);
     }
+    .liquidGlass-effect {
+      position: absolute; inset: 0; z-index: 0;
+      backdrop-filter: blur(3px);      
+      filter: url(#glass-distortion);  
+      isolation: isolate;
+    }
+
+    .liquidGlass-tint {
+      position: absolute; inset: 0; z-index: 1;
+      background: rgba(255,255,255,0.25); 
+    }
+
+    .liquidGlass-shine {
+      position: absolute; inset: 0; z-index: 2;
+      box-shadow:
+        inset 2px 2px 1px rgba(255,255,255,0.5),
+        inset -1px -1px 1px 1px rgba(255,255,255,0.5);
+    }
+
+    .liquidGlass-text {
+      position: relative; z-index: 3;
+    }
+
   </style>
 </head>
 
 <body>
   <div class="wrap {% block wrap_class %}{% endblock %}">
-    {% block header %}
-      <h1 class="title">🏋🏿GymBro</h1>
-    {% endblock %}
 
-    {% set on_dashboard = request.endpoint == 'dashboard' %}
+    <div class="liquidGlass-effect"></div>
+    <div class="liquidGlass-tint"></div>
+    <div class="liquidGlass-shine"></div>
 
-    <div class="global-topbar">
-      {% if session.get('username') and not on_dashboard %}
-        <button class="nav-btn" type="button" onclick="history.back()">← Back</button>
-      {% else %}
-        <span></span>
-      {% endif %}
+    <div class="liquidGlass-text">
+      {% block header %}
+        <h1 class="title">🏋🏿GymBro</h1>
+      {% endblock %}
 
-      {% if session.get('username') %}
-        <a class="nav-btn" href="{{ url_for('dashboard') }}">🏠 Home</a>
-      {% endif %}
+      {% set on_dashboard = request.endpoint == 'dashboard' %}
+
+      <div class="global-topbar">
+        {% if session.get('username') and not on_dashboard %}
+          <button class="nav-btn" type="button" onclick="history.back()">← Back</button>
+        {% else %}
+          <span></span>
+        {% endif %}
+
+        {% if session.get('username') %}
+          <a class="nav-btn" href="{{ url_for('dashboard') }}">🏠 Home</a>
+        {% endif %}
+      </div>
+
+      {% for m in get_flashed_messages() %}
+        <div class="flash">{{ m }}</div>
+      {% endfor %}
+
+      {% block content %}{% endblock %}
     </div>
-
-
-    {% for m in get_flashed_messages() %}
-      <div class="flash">{{ m }}</div>
-    {% endfor %}
-
-    {% block content %}{% endblock %}
   </div>
+
+  <svg style="display:none">
+    <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01 0.01" numOctaves="1" seed="5" result="turbulence"/>
+      <feComponentTransfer in="turbulence" result="mapped">
+        <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/>
+        <feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/>
+        <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/>
+      </feComponentTransfer>
+      <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/>
+      <feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight">
+        <fePointLight x="-200" y="-200" z="300"/>
+      </feSpecularLighting>
+      <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/>
+      <feDisplacementMap in="SourceGraphic" in2="softMap" scale="150" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </svg>
 </body>
 </html>
