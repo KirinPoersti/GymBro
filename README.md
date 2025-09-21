@@ -29,6 +29,7 @@ The calendar highlights training days with ✓ and colors cells according to car
       - Type into the exercise input to get suggestions
       - Filter by **muscle group** (Glutes, Shoulders, Quads, Chest, Hamstrings, Triceps, Calves, Biceps, Abs, Back)  
 - [x] **README with setup and testing instructions**.
+- [ ] ❗The logic part for language change isn't ready yet, what's shown is just a shell that does no changes to the UI
 
 ---
 
