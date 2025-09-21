@@ -552,22 +552,26 @@ def training(d):
 def api_exercises():
     if not session.get("user_id"):
         return jsonify([]), 401
+
     q = (request.args.get("q") or "").strip().lower()
     group = (request.args.get("group") or "All").strip()
+
     if group and group != "All" and group in EXERCISE_GROUPS:
         source = EXERCISE_GROUPS[group]
     else:
         source = EXERCISE_CATALOG
-
     if not q:
-        return jsonify([])
+        starter = sorted(source)[:50]          
+        return jsonify(starter)
+
     scored = []
     for name in source:
         ln = name.lower()
         if q in ln:
             scored.append(((ln.find(q), len(ln)), name))
     scored.sort(key=lambda t: t[0])
-    return jsonify([name for _, name in scored[:8]])
+
+    return jsonify([name for _, name in scored[:50]])
 
 # -------- Meal --------
 @app.route("/day/<d>/meals", methods=["GET", "POST"])
