@@ -4,9 +4,10 @@ import db
 from datetime import date, timedelta, datetime
 import calendar
 from math import isfinite
+import config
 
 app = Flask(__name__)
-app.secret_key = "change-me-in-production"  
+app.secret_key = config.secret_key
 
 # --- Exercise catalog for typeahead (flattened names) ---
 EXERCISE_GROUPS = {
