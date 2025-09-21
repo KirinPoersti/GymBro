@@ -560,8 +560,9 @@ def api_exercises():
         source = EXERCISE_GROUPS[group]
     else:
         source = EXERCISE_CATALOG
+
     if not q:
-        starter = sorted(source)[:50]          
+        starter = sorted(source)[:50]         
         return jsonify(starter)
 
     scored = []
@@ -572,6 +573,7 @@ def api_exercises():
     scored.sort(key=lambda t: t[0])
 
     return jsonify([name for _, name in scored[:50]])
+
 
 # -------- Meal --------
 @app.route("/day/<d>/meals", methods=["GET", "POST"])
