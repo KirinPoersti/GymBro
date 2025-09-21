@@ -58,8 +58,7 @@ sqlite3 database.db < schema.sql
 Run the application:
 
 ```
-
-flask run
+python -m flask run
 ```
 Open in Browser:
 
