@@ -3,7 +3,7 @@
 GymBro is a lightweight **Flask** application for logging **workouts** and **meals**.  
 Users can register, log in, maintain a **profile** (height, weight, age, activity level, sex, goal), and log **workouts** (exercises + sets) as well as **meals** (meals + food items + macros).  
 From the profile, the app computes **TDEE**, protein needs, and a **carb cycling schedule** (4 low-carb days + 1 high-carb day).  
-The calendar highlights training days with ✓ and colors cells according to carb type.
+The calendar highlights training days with ⭕ and colors cells according to carb type.
 
 ---
 
