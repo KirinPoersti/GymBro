@@ -1,10 +1,11 @@
 from datetime import date, datetime
-from flask import Blueprint, render_template, request, redirect, url_for, session, abort
+from flask import Blueprint, render_template, request, redirect, url_for, session, abort, jsonify
 
 from services.auth import login_required
 from services.dates import month_grid
 from services.workouts import workout_dates_for_range
 from services.users import low_carb_cycle_info
+from services.leaderboard import reps_leaderboard
 
 
 bp = Blueprint("dashboard_bp", __name__)
@@ -76,3 +77,11 @@ def dashboard():
         highcarb_dates=highcarb_dates,
     )
 
+
+@bp.get("/api/leaderboard/reps", endpoint="api_leaderboard_reps")
+@login_required
+def api_leaderboard_reps():
+    start = request.args.get("start")
+    end = request.args.get("end")
+    rows = reps_leaderboard(start, end)
+    return jsonify(rows)

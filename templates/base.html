@@ -54,10 +54,9 @@
       ::view-transition-new(root) { animation: none !important; }
     }
 
-    html, body, h1, h2, h3, h4, h5, h6,
-    form, label, input, button, select, textarea,
-    .title, .btn, .link, .flash {
-      font-family: 'Inter';
+    /* Force Inter everywhere */
+    html, body, *, *::before, *::after {
+      font-family: 'Inter', sans-serif !important;
     }
 
     body {
@@ -292,14 +291,7 @@
     </div>
   </div>
 
-  <div class="wrap wrap--after">
-    <div class="liquidGlass-effect"></div>
-    <div class="liquidGlass-tint"></div>
-    <div class="liquidGlass-shine"></div>
-    <div class="liquidGlass-text">
-      {% block after_wrap %}{% endblock %}
-    </div>
-  </div>
+  {% block after_wrap %}{% endblock %}
 
   <svg style="display:none">
     <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block wrap_class %}wrap--wide{% endblock %}
 {% block header %}{% endblock %}
 
@@ -16,7 +16,7 @@
 
 <div class="monthbar">
   <a href="{{ url_for('dashboard', y=prev_y, m=prev_m) }}">← Previous</a>
-  <div class="monthtitle">{{ year }} – {{ "%02d"|format(month) }}</div>
+  <div class="monthtitle">{{ year }} - {{ "%02d"|format(month) }}</div>
   <a href="{{ url_for('dashboard', y=next_y, m=next_m) }}">Next →</a>
 </div>
 
@@ -26,10 +26,7 @@
   {% endfor %}
 </div>
 
-<div class="pill-row">
-  <span class="pill" title="Click any day to log or view details">Quick tip: Click a day to open details</span>
-  <span class="pill" title="Use the month arrows above to change the calendar view">Use arrows to switch months</span>
-</div>
+ 
 
 <div class="grid">
   {% for d in grid %}
@@ -189,7 +186,7 @@
 
   /* Pills under the calendar */
   .pill-row{
-    display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; justify-content:center;
+    display:flex; flex-direction:column; gap:10px; margin-top:12px; align-items:center;
   }
   .pill{
     display:inline-flex; align-items:center; justify-content:center;
@@ -212,3 +209,160 @@
   }
 </style>
 {% endblock %}
+
+{% block after_wrap %}
+<!-- Wrap A: Reps Leaderboard -->
+<div class="wrap wrap--wide lb-wrap">
+  <div class="liquidGlass-effect"></div>
+  <div class="liquidGlass-tint"></div>
+  <div class="liquidGlass-shine"></div>
+  <div class="liquidGlass-text">
+    <div class="pill-row">
+      <div class="lb-panel" id="reps-pill">
+        <div class="lb-header">
+          <div class="lb-title">Boss of the gym💪🏻</div>
+          <div class="lb-meta">Week <span id="lb-week">—</span></div>
+        </div>
+
+        <div class="lb-controls"><button class="btn" id="lb-refresh" type="button">Refresh</button></div>
+        <div id="lb-list" class="lb-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Wrap B: Coming Soon (exclusive wrapper) -->
+<div class="wrap wrap--wide" style="margin-top: 16px;">
+  <div class="liquidGlass-effect"></div>
+  <div class="liquidGlass-tint"></div>
+  <div class="liquidGlass-shine"></div>
+  <div class="liquidGlass-text">
+    <div class="pill-row">
+      <div class="lb-panel" title="Reserved for future info" id="info-pill-b">
+        <div class="lb-header">
+          <div class="lb-title">Coming soon</div>
+          <div class="lb-meta">Info</div>
+        </div>
+        <div class="lb-empty">This space will host more stats.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const listEl = document.getElementById('lb-list');
+    const btn = document.getElementById('lb-refresh');
+    const weekEl = document.getElementById('lb-week');
+
+    const today = new Date();
+    const pad = n => (n<10?'0':'') + n;
+    const toISO = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+    function isoWeekNumber(date){
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const dayNum = d.getUTCDay() || 7; // ISO: Mon=1..Sun=7
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+      const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+      return weekNo;
+    }
+
+    function getWeekBounds(base){
+      const d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+      const day = (d.getDay() || 7); // Sun=0 -> 7
+      const monday = new Date(d); monday.setDate(d.getDate() - (day - 1));
+      const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+      return { start: toISO(monday), end: toISO(sunday) };
+    }
+
+    function updateWeek(){ weekEl.textContent = isoWeekNumber(today); }
+
+    async function load(){
+      const {start, end} = getWeekBounds(today);
+      const url = new URL(`${window.location.origin}/api/leaderboard/reps`);
+      url.searchParams.set('start', start);
+      url.searchParams.set('end', end);
+      listEl.innerHTML = '<div class="lb-empty">Loading…</div>';
+      try{
+        const res = await fetch(url.toString(), {credentials:'same-origin'});
+        if(!res.ok){ listEl.innerHTML = '<div class="lb-empty">Failed to load</div>'; return; }
+        const data = await res.json();
+        if(!data || data.length === 0){ listEl.innerHTML = '<div class="lb-empty">No reps logged this week</div>'; return; }
+        listEl.innerHTML = '';
+        data.forEach((row) =>{
+          const item = document.createElement('div');
+          item.className = 'lb-item lb-card';
+          item.innerHTML = `<span class="lb-name">${row.username}</span>
+                            <span class="lb-score">${row.total_reps}</span>`;
+          listEl.appendChild(item);
+        });
+      }catch(e){
+        listEl.innerHTML = '<div class="lb-empty">Error loading leaderboard</div>';
+      }
+    }
+    btn.addEventListener('click', () => { updateWeek(); load(); });
+    load();
+    updateWeek();
+  })();
+</script>
+
+<style>
+  /* Cubic leaderboard look */
+  .lb-panel{
+    width: min(860px, 92vw);
+    border-radius: 28px;
+    padding: 14px 16px 16px;
+
+    /* Liquid glass-style frosted look to match calendar */
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.08),
+      0 8px 24px rgba(0,0,0,.10);
+
+    /* subtle outline akin to glossy edge */
+    border: 2px solid rgba(255,255,255,0.7);
+  }
+
+  /* Leaderboard wrap: match calendar width, give default height */
+  .lb-wrap{ min-height: 420px; }
+  .lb-wrap .pill-row{ justify-content: center; }
+  /* Inside leaderboard wrap, make the block a centered tall white cube */
+  .lb-wrap .lb-panel{
+    width: min(760px, 92%);
+    margin: 6px auto;
+    background: #ffffff;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 2px solid rgba(0,0,0,0.06);
+    box-shadow:
+      0 6px 14px rgba(0,0,0,.10),
+      0 18px 36px rgba(0,0,0,.12);
+    border-radius: 24px;
+    padding: 18px 20px;
+  }
+
+  .lb-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; padding: 4px 6px; }
+  .lb-title{ font-weight:700; font-size:30px; }
+  .lb-meta{ opacity:.9; font-weight:600; }
+
+  .lb-controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin: 6px 0 10px; }
+
+  .lb-list{ display:flex; flex-direction:column; gap:14px; }
+  .lb-card{
+    border: 2px solid rgba(0,0,0,0.08);
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: #fff;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .lb-name{ font-weight:600; }
+  .lb-score{ font-weight:700; }
+  .lb-empty{ opacity:.8; padding:6px 2px; }
+  .btn{ padding:6px 12px; border:none; border-radius:10px; background: rgba(255,255,255,0.15); box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.10); cursor:pointer; }
+  .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.25); }
+</style>
+{% endblock %}
+
