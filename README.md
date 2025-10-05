@@ -29,6 +29,8 @@ The calendar highlights training days with ⭕ and colors cells according to car
       - Type into the exercise input to get suggestions
       - Filter by **muscle group** (Glutes, Shoulders, Quads, Chest, Hamstrings, Triceps, Calves, Biceps, Abs, Back)  
 - [x] **README with setup and testing instructions**.
+- [x] **Leaderboard** that shows who's got the most reps for the week.
+- [x] **Recipe sharing section** for people to share what they are eating
 - [ ] ❗The logic part for language change isn't ready yet, what's shown is just a shell that does no changes to the UI
 
 ---
@@ -86,5 +88,6 @@ To verify the goals of 3rd submission, you can verify the following actions like
   - You can check diets posted by other users and give them a like. You can also submit your own to recieve feed back from the others
   - <img width="1026" height="457" alt="image" src="https://github.com/user-attachments/assets/5cafabcb-8cc0-4fc6-bc70-f11b0020d85c" />
 
-## Potential Future Development 
+## Potential Future Development/existing issues
 - Multi Language support
+- I'm aware that JS should be left out from the code, but as for now some of the core functions are being made possible through it, I will try to somehow replace them before the last submission
