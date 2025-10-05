@@ -20,7 +20,7 @@ The calendar highlights training days with ⭕ and colors cells according to car
     - Suggested carb intake shown for low/high-carb days  
   - **Profile**: updating values saves preferences and recalculates derived targets.
 - [x] **View stored data**:
-    - Calendar shows days, ✓ ticks for real workouts, carb cycle colors.
+    - Calendar shows days, ⭕ for real workouts, carb cycle colors.
     - Day view with Training and Meals subpages.
     - Meals page lists saved meals/items.
     - Profile page displays computed calorie/macronutrient targets.
@@ -74,19 +74,21 @@ To verify the goals of 3rd submission, you can verify the following actions like
 
 - Sovelluksessa on käyttäjäsivut, jotka näyttävät tilastoja ja käyttäjän lisäämät tietokohteet.
   - Under this block, the leaderboard will list out users with the most amount of reps done during the week. The rep amount is being summed through user documentation.
+  - To test this part, please create 2 users and also at least ONE training entry for one day.
     <img width="1069" height="509" alt="image" src="https://github.com/user-attachments/assets/36f33101-e0dd-4f1a-87fa-ece9554874d1" />
     - By documentating your training session in the following way:
-     <img width="1033" height="858" alt="image" src="https://github.com/user-attachments/assets/58b13167-5e07-4f52-8440-94021438a3cf" />
+    <img width="1003" height="503" alt="image" src="https://github.com/user-attachments/assets/e75f16c4-dcdc-48dc-adb5-6ae6d858c208" />
      you will be able to revisit the documented training by clicking on the days with the ⭕️ mark.
      <img width="937" height="337" alt="image" src="https://github.com/user-attachments/assets/33f2391b-773c-4ad1-ae91-69dbf324782e" />
  
 - Käyttäjä pystyy valitsemaan tietokohteelle yhden tai useamman luokittelun. Mahdolliset luokat ovat tietokannassa.
   - While documentating your trainings, you're able to filter preset exercises with the dropbox
     <img width="680" height="412" alt="image" src="https://github.com/user-attachments/assets/ba049add-08f3-40e0-8b02-33d6edf4203c" />
- 
+
 - Käyttäjä pystyy lähettämään toisen käyttäjän tietokohteeseen liittyen jotain lisätietoa, joka tulee näkyviin sovelluksessa.
   - You can check diets posted by other users and give them a like. You can also submit your own to recieve feed back from the others
   - <img width="1026" height="457" alt="image" src="https://github.com/user-attachments/assets/5cafabcb-8cc0-4fc6-bc70-f11b0020d85c" />
+  - To test this part, please create 2 users and also at least 2 recipes to view the results
 
 ## Potential Future Development/existing issues
 - Multi Language support
