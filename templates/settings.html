@@ -8,6 +8,7 @@
   <a class="block" href="{{ url_for('settings_username') }}">Change username</a>
   <a class="block" href="{{ url_for('settings_password') }}">Change password</a>
   <a class="block" href="{{ url_for('settings_language') }}">Language</a>
+  <a class="block" href="{{ url_for('logout') }}" onclick="return confirm('Are you sure you want to log out?');" aria-label="Log out">Logout</a>
   <form method="post" action="{{ url_for('settings_delete') }}"
         onsubmit="return confirm('Delete account? This cannot be undone.');">
     <button class="block danger" type="submit">Delete account</button>

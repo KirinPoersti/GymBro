@@ -269,11 +269,12 @@
         <h1 class="title">🏋🏿GymBro</h1>
       {% endblock %}
 
-      {% set on_dashboard = request.endpoint == 'dashboard' %}
+      {# Treat both blueprint and alias endpoints, or match by path #}
+      {% set on_dashboard = request.path == '/dashboard' %}
 
       <div class="global-topbar">
         {% if session.get('username') and not on_dashboard %}
-          <button class="nav-btn" type="button" onclick="history.back()">← Back</button>
+          <span></span>
         {% else %}
           <span></span>
         {% endif %}
