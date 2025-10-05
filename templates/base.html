@@ -257,6 +257,31 @@
   </style>
 </head>
 
+<script>
+  (function () {
+    function internal(a){ return a && a.origin === location.origin; }
+    function newTab(e,a){ return e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||a.target==='_blank'; }
+
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a');
+      if (!a || !internal(a) || newTab(e,a) || a.hasAttribute('download')) return;
+      const href = a.getAttribute('href') || '';
+      if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+
+      if (!document.startViewTransition) return; // fallback
+      e.preventDefault();
+
+      // Toggle perf-guard class during the transition only
+      document.documentElement.classList.add('vt');
+      const vt = document.startViewTransition(() => { window.location.href = a.href; });
+      // Remove class when finished (both settle paths)
+      Promise.resolve(vt && vt.finished).finally(() => {
+        document.documentElement.classList.remove('vt');
+      });
+    });
+  })();
+</script>
+
 <body>
   <div class="wrap {% block wrap_class %}{% endblock %}">
 
