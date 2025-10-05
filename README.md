@@ -67,10 +67,24 @@ Open in Browser:
 http://127.0.0.1:5000
 ```
 
+# How to test?🔍
+To verify the goals of 3rd submission, you can verify the following actions like this:
+
+- Sovelluksessa on käyttäjäsivut, jotka näyttävät tilastoja ja käyttäjän lisäämät tietokohteet.
+  - Under this block, the leaderboard will list out users with the most amount of reps done during the week. The rep amount is being summed through user documentation.
+    <img width="1069" height="509" alt="image" src="https://github.com/user-attachments/assets/36f33101-e0dd-4f1a-87fa-ece9554874d1" />
+    - By documentating your training session in the following way:
+     <img width="1033" height="858" alt="image" src="https://github.com/user-attachments/assets/58b13167-5e07-4f52-8440-94021438a3cf" />
+     you will be able to revisit the documented training by clicking on the days with the ⭕️ mark.
+     <img width="937" height="337" alt="image" src="https://github.com/user-attachments/assets/33f2391b-773c-4ad1-ae91-69dbf324782e" />
+ 
+- Käyttäjä pystyy valitsemaan tietokohteelle yhden tai useamman luokittelun. Mahdolliset luokat ovat tietokannassa.
+  - While documentating your trainings, you're able to filter preset exercises with the dropbox
+    <img width="680" height="412" alt="image" src="https://github.com/user-attachments/assets/ba049add-08f3-40e0-8b02-33d6edf4203c" />
+ 
+- Käyttäjä pystyy lähettämään toisen käyttäjän tietokohteeseen liittyen jotain lisätietoa, joka tulee näkyviin sovelluksessa.
+  - You can check diets posted by other users and give them a like. You can also submit your own to recieve feed back from the others
+  - <img width="1026" height="457" alt="image" src="https://github.com/user-attachments/assets/5cafabcb-8cc0-4fc6-bc70-f11b0020d85c" />
+
 ## Potential Future Development 
-- Statistics dashboard
-- Performance enhancement
 - Multi Language support
-- Weekly/monthly workout summaries
-- Charts for calories, macros, and weight changes
-- Preloaded exercises with descriptions and images
