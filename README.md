@@ -76,7 +76,7 @@ To verify the goals of 3rd submission, you can verify the following actions like
   - Under this block, the leaderboard will list out users with the most amount of reps done during the week. The rep amount is being summed through user documentation.
     <img width="1069" height="509" alt="image" src="https://github.com/user-attachments/assets/36f33101-e0dd-4f1a-87fa-ece9554874d1" />
     - By documentating your training session in the following way:
-     <img width="1033" height="858" alt="image" src="https://github.com/user-attachments/assets/58b13167-5e07-4f52-8440-94021438a3cf" />
+    <img width="1003" height="503" alt="image" src="https://github.com/user-attachments/assets/e75f16c4-dcdc-48dc-adb5-6ae6d858c208" />
      you will be able to revisit the documented training by clicking on the days with the ⭕️ mark.
      <img width="937" height="337" alt="image" src="https://github.com/user-attachments/assets/33f2391b-773c-4ad1-ae91-69dbf324782e" />
  
