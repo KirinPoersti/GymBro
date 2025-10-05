@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block wrap_class %}wrap--wide{% endblock %}
+{% block header %}{% endblock %}
+
+{% block content %}
+<div class="submit-wrap">
+  <h2 class="title" style="margin-top:0">Share your plan</h2>
+
+  <div class="meal-card plan-card">
+    <div class="meal-body">
+      <div class="meal-name-pill">
+        <input class="meal-name-input" id="_hidden_meal_title" placeholder="Plan title">
+      </div>
+      <div class="item-list" id="items"></div>
+      <button class="add-item-bottom" type="button" id="add-item" aria-label="Add item">+</button>
+    </div>
+  </div>
+
+  <button id="save" class="btn submit-center">Submit</button>
+</div>
+
+<style>
+  .wrap.wrap--wide{ max-width: 980px; }
+  .submit-wrap{ width:100%; max-width: 980px; margin: 0 auto; }
+  .btn{ padding:10px 20px; border:none; border-radius:10px; font-size:15px; cursor:pointer; color:#111; background: rgba(255,255,255,0.15); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.10); }
+  .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.25); }
+  .submit-center{ display:block; margin:14px auto 0; }
+  .meal-card{ width:100%; border:none; border-radius:20px; background:#fff; padding:16px; position:relative; margin:0; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.10); }
+  .plan-card{ max-width: 640px; margin: 12px auto 0; }
+  .meal-body{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .meal-name-pill,.food-name-pill{ display:inline-flex; align-items:center; justify-content:center; border:none; border-radius:12px; background:#fff; padding:0 12px; height:36px; min-width:200px; box-shadow:none; }
+  .meal-name-input,.food-name-input{ border:0; outline:none; background:transparent; font-size:16px; text-align:center; min-width:200px; width:auto; height:36px; line-height:36px; }
+  .food-name-wrap{ display:flex; justify-content:center; margin-bottom:8px; }
+  .item-panel{ border:none; border-radius:16px; background:#fff; padding:18px; margin-top:12px; position:relative; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.10); }
+  .kill-btn.small{ position:absolute; top:10px; right:10px; width:28px; height:28px; border:none; border-radius:10px; display:flex; align-items:center; justify-content:center; background:#fff; cursor:pointer; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 20px rgba(0,0,0,.10); }
+  .kill-btn.small{ z-index: 2; pointer-events: auto; }
+  .macro-grid{ display:flex; gap:32px; justify-content:center; }
+  .big-square{ width:60px; height:60px; border:none; border-radius:10px; background:#fff; display:flex; align-items:center; justify-content:center; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 20px rgba(0,0,0,.08); }
+  .big-input{ width:100%; height:100%; border:0; outline:none; background:transparent; text-align:center; font-size:18px; line-height:1; margin:0; padding:0; }
+  .big-input[type=number] { appearance: textfield; -moz-appearance: textfield; }
+  .big-input::-webkit-outer-spin-button,
+  .big-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .big-input:focus{ box-shadow: inset 0 0 0 3px rgba(122,167,255,1); border-radius:10px; }
+  .big-label{ text-align:center; margin-top:4px; font-size:13px; }
+  .add-item-bottom{ width:60px; height:60px; border:none; border-radius:15px; display:flex; align-items:center; justify-content:center; background:#fff; cursor:pointer; font-size:20px; align-self:center; margin:0; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 20px rgba(0,0,0,.10); }
+  .add-item-bottom:hover{ transform: translateY(-1px); background:#f7f7f7; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 14px 28px rgba(0,0,0,.16); }
+</style>
+
+<script>
+  'use strict';
+
+  const itemsEl = document.getElementById('items');
+  const addBtn = document.getElementById('add-item');
+  const saveBtn = document.getElementById('save');
+
+  function sizePill(input){
+    const min = 120, max = 420;
+    const text = input.value || input.placeholder || '';
+    const w = Math.max(min, Math.min(max, 22 + text.length * 9));
+    const pill = input.closest('.meal-name-pill, .food-name-pill');
+    if (pill) pill.style.width = w + 'px';
+  }
+  function wirePillAutosize(input){ sizePill(input); input.addEventListener('input', () => sizePill(input)); }
+
+  const state = { items: [] };
+
+  function render(){
+    itemsEl.innerHTML = '';
+    state.items.forEach((it, j) => {
+      const panel = document.createElement('div');
+      panel.className = 'item-panel';
+      panel.innerHTML = `
+        <button class="kill-btn small" type="button" data-delitem="${j}" aria-label="Remove item">x</button>
+        <div class="food-name-wrap">
+          <div class="food-name-pill">
+            <input class="food-name-input" placeholder="Food item" value="${it.name || ''}">
+          </div>
+        </div>
+        <div class="macro-grid">
+          <div>
+            <div class="big-square"><input class="big-input w" type="number" min="0" step="1" value="${it.weight ?? ''}"></div>
+            <div class="big-label">Weight(g)</div>
+          </div>
+          <div>
+            <div class="big-square"><input class="big-input p" type="number" min="0" step="0.1" value="${it.protein ?? ''}"></div>
+            <div class="big-label">Protein(g)</div>
+          </div>
+          <div>
+            <div class="big-square"><input class="big-input c" type="number" min="0" step="0.1" value="${it.carbs ?? ''}"></div>
+            <div class="big-label">Carb(g)</div>
+          </div>
+          <div>
+            <div class="big-square"><input class="big-input k" type="number" min="0" step="1" value="${it.calories ?? ''}"></div>
+            <div class="big-label">Calories(kcal)</div>
+          </div>
+        </div>`;
+      itemsEl.appendChild(panel);
+
+      const foodInput = panel.querySelector('.food-name-input');
+      foodInput.oninput = e => { it.name = e.target.value; sizePill(foodInput); };
+      wirePillAutosize(foodInput);
+
+      panel.querySelector('.w').oninput = e => it.weight   = e.target.value;
+      panel.querySelector('.p').oninput = e => it.protein  = e.target.value;
+      panel.querySelector('.c').oninput = e => it.carbs    = e.target.value;
+      panel.querySelector('.k').oninput = e => it.calories = e.target.value;
+      panel.querySelector('[data-delitem]').onclick = () => { state.items.splice(j,1); render(); };
+    });
+  }
+
+  addBtn.addEventListener('click', () => { state.items.push({ name:'', weight:'', protein:'', carbs:'', calories:'' }); render(); });
+  render();
+
+  // Robust: delegate remove clicks to the list wrapper in case of overlay issues
+  itemsEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-delitem]');
+    if(!btn) return;
+    const idx = parseInt(btn.getAttribute('data-delitem'), 10);
+    if(Number.isFinite(idx)){
+      state.items.splice(idx, 1);
+      render();
+    }
+  });
+
+  document.getElementById('save').addEventListener('click', async ()=>{
+    const title = (document.getElementById('_hidden_meal_title').value||'').trim();
+    const items = state.items
+      .filter(it => it.weight !== '' || it.protein !== '' || it.carbs !== '' || it.calories !== '' || (it.name || '').trim())
+      .map(it => ({ name:(it.name||'').trim(), weight:it.weight, protein:it.protein, carbs:it.carbs, calories:it.calories }));
+    saveBtn.disabled = true; saveBtn.textContent = 'Submitting…';
+    const res = await fetch('{{ url_for('plans_forum_bp.plans_submit_post') }}', {
+      method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ title, items })
+    });
+    const j = await res.json();
+    if(j.ok){
+      // Brief confirmation before redirect
+      saveBtn.textContent = 'Submitted!';
+      setTimeout(()=>{ location.href = j.url; }, 600);
+    } else {
+      alert('Save failed');
+      saveBtn.disabled = false; saveBtn.textContent = 'Submit';
+    }
+  });
+</script>
+{% endblock %}

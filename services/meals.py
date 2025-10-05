@@ -5,9 +5,19 @@ import db
 from .users import low_carb_cycle_info
 
 
-def _meal_items_schema() -> Tuple[bool, bool]:
+def _meal_items_schema() -> Tuple[bool, bool, bool]:
     mi_cols = {c["name"] for c in db.query("PRAGMA table_info(meal_items)")}
-    return ("name" in mi_cols), ("food" in mi_cols)
+    has_name = "name" in mi_cols
+    has_food = "food" in mi_cols
+    has_weight = "weight" in mi_cols
+    # If weight column missing on existing DBs, add it lazily
+    if not has_weight:
+        try:
+            db.execute("ALTER TABLE meal_items ADD COLUMN weight REAL")
+            has_weight = True
+        except Exception:
+            pass
+    return has_name, has_food, has_weight
 
 
 def save_meals(user_id: int, d: str, meals_payload: List[Dict]) -> None:
@@ -23,7 +33,7 @@ def save_meals(user_id: int, d: str, meals_payload: List[Dict]) -> None:
     )
     db.execute("DELETE FROM meals WHERE day_id=?", (day["id"],))
 
-    MI_HAS_NAME, MI_HAS_FOOD = _meal_items_schema()
+    MI_HAS_NAME, MI_HAS_FOOD, MI_HAS_WEIGHT = _meal_items_schema()
 
     saved_meals = 0
     for i, meal in enumerate(meals_payload):
@@ -33,12 +43,14 @@ def save_meals(user_id: int, d: str, meals_payload: List[Dict]) -> None:
         items_in = []
         for it in raw_items:
             nm = (it.get("name") or "").strip()
+            w = _to_float_none(it.get("weight"))
             p = _to_float_none(it.get("protein"))
             c = _to_float_none(it.get("carbs"))
             k = _to_int_none(it.get("calories"))
-            if nm or p is not None or c is not None or k is not None:
+            if nm or w is not None or p is not None or c is not None or k is not None:
                 items_in.append({
                     "name": nm,
+                    "weight": w or 0.0,
                     "protein": p or 0.0,
                     "carbs": c or 0.0,
                     "calories": k or 0,
@@ -60,39 +72,77 @@ def save_meals(user_id: int, d: str, meals_payload: List[Dict]) -> None:
         for it in items_in:
             name_to_save = (it["name"] or "").strip()
             if MI_HAS_NAME:
-                db.execute(
-                    "INSERT INTO meal_items (meal_id, name, protein, carbs, calories) VALUES (?,?,?,?,?)",
-                    (
-                        meal_id,
-                        name_to_save,
-                        it["protein"],
-                        it["carbs"],
-                        it["calories"],
-                    ),
-                )
+                if MI_HAS_WEIGHT:
+                    db.execute(
+                        "INSERT INTO meal_items (meal_id, name, weight, protein, carbs, calories) VALUES (?,?,?,?,?,?)",
+                        (
+                            meal_id,
+                            name_to_save,
+                            it["weight"],
+                            it["protein"],
+                            it["carbs"],
+                            it["calories"],
+                        ),
+                    )
+                else:
+                    db.execute(
+                        "INSERT INTO meal_items (meal_id, name, protein, carbs, calories) VALUES (?,?,?,?,?)",
+                        (
+                            meal_id,
+                            name_to_save,
+                            it["protein"],
+                            it["carbs"],
+                            it["calories"],
+                        ),
+                    )
             elif MI_HAS_FOOD:
                 if name_to_save == "":
                     name_to_save = "-"
-                db.execute(
-                    "INSERT INTO meal_items (meal_id, food, protein, carbs, calories) VALUES (?,?,?,?,?)",
-                    (
-                        meal_id,
-                        name_to_save,
-                        it["protein"],
-                        it["carbs"],
-                        it["calories"],
-                    ),
-                )
+                if MI_HAS_WEIGHT:
+                    db.execute(
+                        "INSERT INTO meal_items (meal_id, food, weight, protein, carbs, calories) VALUES (?,?,?,?,?,?)",
+                        (
+                            meal_id,
+                            name_to_save,
+                            it["weight"],
+                            it["protein"],
+                            it["carbs"],
+                            it["calories"],
+                        ),
+                    )
+                else:
+                    db.execute(
+                        "INSERT INTO meal_items (meal_id, food, protein, carbs, calories) VALUES (?,?,?,?,?)",
+                        (
+                            meal_id,
+                            name_to_save,
+                            it["protein"],
+                            it["carbs"],
+                            it["calories"],
+                        ),
+                    )
             else:
-                db.execute(
-                    "INSERT INTO meal_items (meal_id, protein, carbs, calories) VALUES (?,?,?,?)",
-                    (
-                        meal_id,
-                        it["protein"],
-                        it["carbs"],
-                        it["calories"],
-                    ),
-                )
+                if MI_HAS_WEIGHT:
+                    db.execute(
+                        "INSERT INTO meal_items (meal_id, weight, protein, carbs, calories) VALUES (?,?,?,?,?)",
+                        (
+                            meal_id,
+                            it["weight"],
+                            it["protein"],
+                            it["carbs"],
+                            it["calories"],
+                        ),
+                    )
+                else:
+                    db.execute(
+                        "INSERT INTO meal_items (meal_id, protein, carbs, calories) VALUES (?,?,?,?)",
+                        (
+                            meal_id,
+                            it["protein"],
+                            it["carbs"],
+                            it["calories"],
+                        ),
+                    )
 
     if saved_meals == 0:
         db.execute("DELETE FROM meal_days WHERE id=?", (day["id"],))
@@ -104,19 +154,20 @@ def fetch_meals(user_id: int, d: str) -> List[Dict]:
     if not day:
         return meals
 
-    MI_HAS_NAME, MI_HAS_FOOD = _meal_items_schema()
+    MI_HAS_NAME, MI_HAS_FOOD, MI_HAS_WEIGHT = _meal_items_schema()
 
     for mrow in db.query("SELECT id, name FROM meals WHERE day_id=? ORDER BY ord", (day["id"],)):
+        base_cols = "protein, carbs, calories"
+        if MI_HAS_WEIGHT:
+            base_cols = "weight, " + base_cols
         if MI_HAS_NAME and MI_HAS_FOOD:
-            q = (
-                "SELECT COALESCE(name, food) AS name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
-            )
+            q = f"SELECT COALESCE(name, food) AS name, {base_cols} FROM meal_items WHERE meal_id=?"
         elif MI_HAS_NAME:
-            q = "SELECT name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
+            q = f"SELECT name, {base_cols} FROM meal_items WHERE meal_id=?"
         elif MI_HAS_FOOD:
-            q = "SELECT food AS name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
+            q = f"SELECT food AS name, {base_cols} FROM meal_items WHERE meal_id=?"
         else:
-            q = "SELECT '' AS name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
+            q = f"SELECT '' AS name, {base_cols} FROM meal_items WHERE meal_id=?"
         items = db.query(q, (mrow["id"],))
         meals.append({"name": mrow["name"], "items": items})
 
@@ -151,4 +202,3 @@ def _to_float_none(x):
 def _to_int_none(x):
     f = _to_float_none(x)
     return int(f) if f is not None else None
-

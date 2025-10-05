@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS meal_items (
   id       INTEGER PRIMARY KEY,
   meal_id  INTEGER NOT NULL,
   name     TEXT,
+  weight   REAL,
   protein  REAL,                            
   carbs    REAL,
   calories INTEGER,
