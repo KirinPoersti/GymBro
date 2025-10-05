@@ -16,7 +16,7 @@
 
 <div class="monthbar">
   <a href="{{ url_for('dashboard', y=prev_y, m=prev_m) }}">← Previous</a>
-  <div class="monthtitle">{{ year }} - {{ "%02d"|format(month) }}</div>
+  <div class="monthtitle">{{ month_name }} {{ year }}</div>
   <a href="{{ url_for('dashboard', y=next_y, m=next_m) }}">Next →</a>
 </div>
 
