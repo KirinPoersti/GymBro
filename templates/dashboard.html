@@ -26,6 +26,11 @@
   {% endfor %}
 </div>
 
+<div class="pill-row">
+  <span class="pill" title="Click any day to log or view details">Quick tip: Click a day to open details</span>
+  <span class="pill" title="Use the month arrows above to change the calendar view">Use arrows to switch months</span>
+</div>
+
 <div class="grid">
   {% for d in grid %}
     {% set dim = (d.month != month) %}
@@ -181,6 +186,25 @@
   .cell.day .num { font-weight:700; font-size:14px; }
   .cell.day.dim { opacity:.45; }
   .cell.day.today { outline:5px solid #30ff98; outline-offset:-3px; }
+
+  /* Pills under the calendar */
+  .pill-row{
+    display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; justify-content:center;
+  }
+  .pill{
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:8px 14px; border:none; border-radius:999px; line-height:1;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    color:#111; font-size:14px; white-space:nowrap; max-width:100%;
+    box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.10);
+    transition: box-shadow .2s ease, transform .2s ease, background .2s ease;
+  }
+  .pill:hover{
+    transform: translateY(-1px);
+    background: rgba(255,255,255,0.25);
+    box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 14px 32px rgba(0,0,0,.16);
+  }
 
   @media (max-width:860px){
     .wrap--wide { max-width:100%; }
