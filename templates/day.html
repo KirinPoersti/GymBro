@@ -4,13 +4,9 @@
 <h2 class="page-title">{{ d }}</h2>
 
 <div class="cards">
-  <a class="card" href="{{ url_for('day_view', d=d) }}#training" onclick="go('/day/{{ d }}/training'); return false;">Training</a>
-  <a class="card" href="{{ url_for('day_view', d=d) }}#meals"    onclick="go('/day/{{ d }}/meals'); return false;">Meals</a>
+  <a class="card" href="{{ url_for('training', d=d) }}">Training</a>
+  <a class="card" href="{{ url_for('meals_view', d=d) }}">Meals</a>
 </div>
-
-<script>
-function go(path){ window.location = path; }
-</script>
 
 <style>
   .title {

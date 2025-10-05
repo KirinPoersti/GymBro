@@ -5,9 +5,14 @@ from datetime import date, timedelta, datetime
 import calendar
 from math import isfinite
 import config
+import secrets
 
 app = Flask(__name__)
 app.secret_key = config.secret_key
+
+@app.before_request
+def _ensure_csrf():
+    session.setdefault("csrf_token", secrets.token_hex(32))
 
 # --- Exercise catalog for typeahead (flattened names) ---
 EXERCISE_GROUPS = {
@@ -468,246 +473,330 @@ def training(d):
         return redirect(url_for("login"))
     uid = session["user_id"]
 
+    # validate date
     try:
         y, m, dd = (int(x) for x in d.split("-"))
         _ = date(y, m, dd)
     except Exception:
         abort(404)
 
+    # helper to load DB into payload (unchanged in spirit) 
+    def load_exercises_from_db():
+        w = db.query_one("SELECT * FROM workouts WHERE user_id=? AND wdate=?", (uid, d))
+        payload = []
+        if w:
+            ex_rows = db.query("SELECT * FROM exercises WHERE workout_id=? ORDER BY ord", (w["id"],))
+            for e in ex_rows:
+                sets_rows = db.query("SELECT * FROM sets WHERE exercise_id=? ORDER BY set_no", (e["id"],))
+                payload.append({
+                    "name": e["name"] or "",
+                    "group": e.get("group") or "All" if "group" in e else "All",
+                    "sets": [{
+                        "reps": (s["reps"] if s["reps"] is not None else None),
+                        "weight": (s["weight"] if s["weight"] is not None else None)
+                    } for s in sets_rows]
+                })
+        return payload
+
     if request.method == "POST":
-        data = request.get_json(silent=True) or {}
-        exercises = data.get("exercises", [])
+        # CSRF
+        token = request.form.get("csrf_token")
+        if not token or token != session.get("csrf_token"):
+            abort(400)
 
-        w = get_or_create_workout(uid, d)
+        action = request.form.get("action", "")
+        ex_state = _parse_form_exercises(request.form)
 
-        db.execute(
-            "DELETE FROM sets WHERE exercise_id IN (SELECT id FROM exercises WHERE workout_id=?)",
-            (w["id"],)
-        )
-        db.execute("DELETE FROM exercises WHERE workout_id=?", (w["id"],))
+        # add/remove UI actions (no DB writes yet)
+        if action == "add_ex":
+            ex_state.append({"name": "", "group": "All", "sets": []})
+            return render_template("training.html", d=d, exercises=ex_state)
 
-        inserted_exercises = 0  
+        if action.startswith("del_ex_"):
+            try:
+                i = int(action.split("_")[-1])
+                if 0 <= i < len(ex_state):
+                    ex_state.pop(i)
+            except Exception:
+                pass
+            return render_template("training.html", d=d, exercises=ex_state)
 
-        for idx, ex in enumerate(exercises):
-            name = (ex.get("name") or "").strip()
+        if action.startswith("add_set_"):
+            try:
+                i = int(action.split("_")[-1])
+                ex_state[i]["sets"].append({"weight": None, "reps": None})
+            except Exception:
+                pass
+            return render_template("training.html", d=d, exercises=ex_state)
 
-            raw_sets = ex.get("sets", []) or []
-            sets_in = []
-            for s in raw_sets:
-                reps_raw = s.get("reps")
-                weight_raw = s.get("weight")
-                has_reps = (reps_raw not in (None, ""))
-                has_weight = (weight_raw not in (None, ""))
-                if has_reps or has_weight:
+        if action.startswith("del_set_"):
+            try:
+                _, _, ei, sj = action.split("_")
+                ei, sj = int(ei), int(sj)
+                if 0 <= ei < len(ex_state) and 0 <= sj < len(ex_state[ei]["sets"]):
+                    ex_state[ei]["sets"].pop(sj)
+            except Exception:
+                pass
+            return render_template("training.html", d=d, exercises=ex_state)
 
-                    reps = int(reps_raw) if has_reps else None
-                    weight = float(str(weight_raw).replace(",", ".")) if has_weight else None
-                    sets_in.append({"reps": reps, "weight": weight})
+        if action == "save":
+            cleaned = []
+            for e in ex_state:
+                nm = (e.get("name") or "").strip()
+                sets = [s for s in (e.get("sets") or []) if (s.get("reps") is not None or s.get("weight") is not None)]
+                if nm or sets:
+                    cleaned.append({"name": nm, "sets": sets})
 
+            w = db.query_one("SELECT * FROM workouts WHERE user_id=? AND wdate=?", (uid, d))
+            if not w:
+                db.execute("INSERT INTO workouts (user_id, wdate) VALUES (?, ?)", (uid, d))
+                w = db.query_one("SELECT * FROM workouts WHERE user_id=? AND wdate=?", (uid, d))
 
-            if not name and not sets_in:
-                continue
+            db.execute("DELETE FROM sets WHERE exercise_id IN (SELECT id FROM exercises WHERE workout_id=?)", (w["id"],))
+            db.execute("DELETE FROM exercises WHERE workout_id=?", (w["id"],))
 
-            db.execute(
-                "INSERT INTO exercises (workout_id, name, ord) VALUES (?, ?, ?)",
-                (w["id"], name or f"Exercise {idx+1}", idx)
-            )
-            ex_id = db.query_one(
-                "SELECT id FROM exercises WHERE workout_id=? AND ord=?",
-                (w["id"], idx)
-            )["id"]
+            inserted_exercises = 0
+            for idx, ex in enumerate(cleaned):
+                db.execute("INSERT INTO exercises (workout_id, name, ord) VALUES (?, ?, ?)", (w["id"], ex["name"] or f"Exercise {idx+1}", idx))
+                ex_id = db.query_one("SELECT id FROM exercises WHERE workout_id=? AND ord=?", (w["id"], idx))["id"]
+                inserted_exercises += 1
+                for s_idx, s in enumerate(ex["sets"], start=1):
+                    db.execute("INSERT INTO sets (exercise_id, set_no, reps, weight) VALUES (?, ?, ?, ?)",
+                               (ex_id, s.get("reps"), s.get("weight")))
+            if inserted_exercises == 0:
+                db.execute("DELETE FROM workouts WHERE id=?", (w["id"],))
 
-            inserted_exercises += 1
+            flash("Training saved.")
+            return redirect(url_for("training", d=d))
 
-            for s_idx, s in enumerate(sets_in, start=1):
-                db.execute(
-                    "INSERT INTO sets (exercise_id, set_no, reps, weight) VALUES (?, ?, ?, ?)",
-                    (ex_id, s_idx, s["reps"], s["weight"])
-                )
+        return render_template("training.html", d=d, exercises=ex_state)
 
-        if inserted_exercises == 0:
-            db.execute("DELETE FROM workouts WHERE id=?", (w["id"],))
-
-        if request.is_json:
-            return jsonify({"ok": True})
-        return redirect(url_for("training", d=d), code=303)
-
-    w = db.query_one("SELECT * FROM workouts WHERE user_id=? AND wdate=?", (uid, d))
-    exercises_payload = []
-    if w:
-        ex_rows = db.query("SELECT * FROM exercises WHERE workout_id=? ORDER BY ord", (w["id"],))
-        for e in ex_rows:
-            sets_rows = db.query("SELECT * FROM sets WHERE exercise_id=? ORDER BY set_no", (e["id"],))
-            exercises_payload.append({
-                "name": e["name"] or "",
-                "sets": [{
-                    "reps": (s["reps"] if s["reps"] is not None else ""),
-                    "weight": (s["weight"] if s["weight"] is not None else "")
-                } for s in sets_rows]
-            })
-
+    exercises_payload = load_exercises_from_db()
+    if not exercises_payload:
+        exercises_payload = [{ "name": "", "group": "All", "sets": [] }]
     return render_template("training.html", d=d, exercises=exercises_payload)
 
-@app.get("/api/exercises")
-def api_exercises():
-    if not session.get("user_id"):
-        return jsonify([]), 401
-
-    q = (request.args.get("q") or "").strip().lower()
-    group = (request.args.get("group") or "All").strip()
-
-    if group and group != "All" and group in EXERCISE_GROUPS:
-        source = EXERCISE_GROUPS[group]
-    else:
-        source = EXERCISE_CATALOG
-
-    if not q:
-        starter = sorted(source)[:50]         
-        return jsonify(starter)
-
-    scored = []
-    for name in source:
-        ln = name.lower()
-        if q in ln:
-            scored.append(((ln.find(q), len(ln)), name))
-    scored.sort(key=lambda t: t[0])
-
-    return jsonify([name for _, name in scored[:50]])
-
-
 # -------- Meal --------
+def _carb_flags(uid: int, d_str: str):
+    """Return (is_low, is_high, target_g) based on user profile + date.
+       If neither low/high, compute a 'medium' target as avg(low, high)."""
+    is_low = is_high = False
+    target = None
+
+    y, m, dd = map(int, d_str.split("-"))
+    cur_date = date(y, m, dd)
+
+    u = db.query_one(
+        "SELECT low_carb_start, carbs_low_g, carbs_high_g FROM users WHERE id=?",
+        (uid,)
+    ) or {}
+
+    start_raw = (u.get("low_carb_start") or "").strip()
+    low = u.get("carbs_low_g")
+    high = u.get("carbs_high_g")
+
+    if start_raw:
+        try:
+            start = datetime.strptime(start_raw, "%Y-%m-%d").date()
+            delta = (cur_date - start).days
+            if delta >= 0:
+                r = delta % 5         
+                if 0 <= r <= 3:
+                    is_low = True
+                    target = low
+                elif r == 4:
+                    is_high = True
+                    target = high
+        except Exception:
+            pass
+
+    if not is_low and not is_high:
+        if isinstance(low, (int, float)) and isinstance(high, (int, float)):
+            target = round((low + high) / 2)
+        else:
+            target = low or high or None
+
+    return is_low, is_high, target
+
+def _parse_form_meals(form):
+    """
+    Turn flat form fields into:
+      [{"name": str, "items":[{"name":..., "protein":..., "carbs":..., "calories":...}, ...]}, ...]
+    Field names:
+      meals-<i>-name
+      meals-<i>-items-<j>-name / -protein / -carbs / -calories
+    """
+    meal_idxs = set()
+    for k in form.keys():
+        if k.startswith("meals-") and k.endswith("-name") and "-items-" not in k:
+            try: meal_idxs.add(int(k.split("-")[1]))
+            except: pass
+
+    out = []
+    for i in sorted(meal_idxs):
+        name = (form.get(f"meals-{i}-name") or "").strip()
+
+        item_idxs = set()
+        pref = f"meals-{i}-items-"
+        for k in form.keys():
+            if k.startswith(pref) and k.endswith("-name"):
+                try: item_idxs.add(int(k.split("-")[3]))
+                except: pass
+
+        items = []
+        for j in sorted(item_idxs):
+            nm = (form.get(f"meals-{i}-items-{j}-name") or "").strip()
+            w =  (form.get(f"meals-{i}-items-{j}-weight") or "").strip()
+            p  = (form.get(f"meals-{i}-items-{j}-protein") or "").strip()
+            c  = (form.get(f"meals-{i}-items-{j}-carbs") or "").strip()
+            k  = (form.get(f"meals-{i}-items-{j}-calories") or "").strip()
+            items.append({"name": nm, "protein": p, "carbs": c, "calories": k})
+
+        out.append({"name": name, "items": items})
+    return out
+
 @app.route("/day/<d>/meals", methods=["GET", "POST"])
 def meals_view(d):
     if not session.get("user_id"):
         return redirect(url_for("login"))
     uid = session["user_id"]
 
-    try:
-        y, m, dd = map(int, d.split("-"))
-        cur_date = date(y, m, dd)
-    except Exception:
-        abort(404)
-
-    def _to_float_none(x):
-        if x in (None, ""): return None
-        try: return float(str(x).replace(",", "."))
-        except Exception: return None
-
-    def _to_int_none(x):
-        f = _to_float_none(x)
-        return int(f) if f is not None else None
-
-    mi_cols = {c["name"] for c in db.query("PRAGMA table_info(meal_items)")}
-    MI_HAS_NAME = "name" in mi_cols
-    MI_HAS_FOOD = "food" in mi_cols
-
     is_lowcarb = False
     is_highcarb = False
     suggested_carbs = None
 
-    u = db.query_one(
-        "SELECT low_carb_start, carbs_low_g, carbs_high_g FROM users WHERE id=?",
-        (uid,)
-    )
-    if u and u.get("low_carb_start"):
-        try:
-            start = datetime.strptime(u["low_carb_start"], "%Y-%m-%d").date()
-            delta = (cur_date - start).days
-            if delta >= 0:
-                r = delta % 5
-                if 0 <= r <= 3:
-                    is_lowcarb = True
-                    suggested_carbs = u.get("carbs_low_g")
-                elif r == 4:
-                    is_highcarb = True
-                    suggested_carbs = u.get("carbs_high_g")
-        except Exception:
-            pass
+    def load_meals_from_db():
+        day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
+        meals = []
+        if day:
+            cols = {c["name"] for c in db.query("PRAGMA table_info(meal_items)")}
+            has_name = "name" in cols
+            has_food = "food" in cols
+            for m in db.query("SELECT id, name FROM meals WHERE day_id=? ORDER BY ord", (day["id"],)):
+                if has_name and has_food:
+                    q = "SELECT COALESCE(name, food) AS name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
+                elif has_name:
+                    q = "SELECT name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
+                elif has_food:
+                    q = "SELECT food AS name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
+                else:
+                    q = "SELECT '' AS name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
+                items = db.query(q, (m["id"],))
+                meals.append({"name": m["name"], "items": items})
+        return meals
 
     if request.method == "POST":
-        data = request.get_json(silent=True) or {}
-        meals_payload = data.get("meals", []) or []
+        token = request.form.get("csrf_token")
+        if not token or token != session.get("csrf_token"):
+            abort(400)
 
-        day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
-        if not day:
-            db.execute("INSERT INTO meal_days (user_id, d) VALUES (?, ?)", (uid, d))
+        action = request.form.get("action", "")
+        meals_state = _parse_form_meals(request.form)
+
+        if action == "add_meal":
+            is_lowcarb, is_highcarb, suggested_carbs = _carb_flags(uid, d)
+            meals_state.append({"name": "", "items": []})
+            return render_template("meals.html", d=d, meals=meals_state,
+                                   is_lowcarb=is_lowcarb, is_highcarb=is_highcarb, suggested_carbs=suggested_carbs)
+
+        if action.startswith("add_item_"):
+            try:
+                i = int(action.split("_")[-1])
+                meals_state[i]["items"].append({"name": "", "protein": "", "carbs": "", "calories": ""})
+            except: pass
+            is_lowcarb, is_highcarb, suggested_carbs = _carb_flags(uid, d)
+            return render_template("meals.html", d=d, meals=meals_state,
+                                   is_lowcarb=is_lowcarb, is_highcarb=is_highcarb, suggested_carbs=suggested_carbs)
+
+        if action.startswith("del_meal_"):
+            try:
+                i = int(action.split("_")[-1])
+                if 0 <= i < len(meals_state): meals_state.pop(i)
+            except: pass
+            is_lowcarb, is_highcarb, suggested_carbs = _carb_flags(uid, d)
+            return render_template("meals.html", d=d, meals=meals_state,
+                                   is_lowcarb=is_lowcarb, is_highcarb=is_highcarb, suggested_carbs=suggested_carbs)
+
+        if action.startswith("del_item_"):
+            try:
+                _, _, mi, ji = action.split("_")
+                mi, ji = int(mi), int(ji)
+                if 0 <= mi < len(meals_state) and 0 <= ji < len(meals_state[mi]["items"]):
+                    meals_state[mi]["items"].pop(ji)
+            except: pass
+            is_lowcarb, is_highcarb, suggested_carbs = _carb_flags(uid, d)
+            return render_template("meals.html", d=d, meals=meals_state,
+                                   is_lowcarb=is_lowcarb, is_highcarb=is_highcarb, suggested_carbs=suggested_carbs)
+
+        if action == "save":
+            def _to_float(x):
+                if x in ("", None): return None
+                try: return float(str(x).replace(",", "."))
+                except: return None
+            def _to_int(x):
+                f = _to_float(x)
+                return int(f) if f is not None else None
+
+            cleaned = []
+            for m in meals_state:
+                name = (m.get("name") or "").strip()
+                items = []
+                for it in (m.get("items") or []):
+                    nm = (it.get("name") or "").strip()
+                    p  = _to_float(it.get("protein")); c = _to_float(it.get("carbs")); k = _to_int(it.get("calories"))
+                    if nm or p is not None or c is not None or k is not None:
+                        items.append({"name": nm, "protein": p or 0.0, "carbs": c or 0.0, "calories": k or 0})
+                if name or items:
+                    cleaned.append({"name": name, "items": items})
+
             day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
+            if not day:
+                db.execute("INSERT INTO meal_days (user_id, d) VALUES (?, ?)", (uid, d))
+                day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
 
-        db.execute("DELETE FROM meal_items WHERE meal_id IN (SELECT id FROM meals WHERE day_id=?)", (day["id"],))
-        db.execute("DELETE FROM meals WHERE day_id=?", (day["id"],))
+            db.execute("DELETE FROM meal_items WHERE meal_id IN (SELECT id FROM meals WHERE day_id=?)", (day["id"],))
+            db.execute("DELETE FROM meals WHERE day_id=?", (day["id"],))
 
-        saved_meals = 0
+            inserted = 0
+            cols = {c["name"] for c in db.query("PRAGMA table_info(meal_items)")}
+            has_name = "name" in cols
+            has_food = "food" in cols
 
-        for i, meal in enumerate(meals_payload):
-            meal_name = (meal.get("name") or "").strip()
-            raw_items = meal.get("items", []) or []
+            for i, meal in enumerate(cleaned):
+                db.execute("INSERT INTO meals (day_id, name, ord) VALUES (?, ?, ?)", (day["id"], meal["name"], i))
+                meal_id = db.query_one("SELECT id FROM meals WHERE day_id=? AND ord=?", (day["id"], i))["id"]
+                inserted += 1
+                for it in meal["items"]:
+                    if has_name:
+                        db.execute(
+                            "INSERT INTO meal_items (meal_id, name, protein, carbs, calories) VALUES (?,?,?,?,?)",
+                            (meal_id, it["name"], it["protein"], it["carbs"], it["calories"])
+                        )
+                    elif has_food:
+                        db.execute(
+                            "INSERT INTO meal_items (meal_id, food, protein, carbs, calories) VALUES (?,?,?,?,?)",
+                            (meal_id, it["name"] or "-", it["protein"], it["carbs"], it["calories"])
+                        )
+                    else:
+                        db.execute(
+                            "INSERT INTO meal_items (meal_id, protein, carbs, calories) VALUES (?,?,?,?)",
+                            (meal_id, it["protein"], it["carbs"], it["calories"])
+                        )
 
-            items_in = []
-            for it in raw_items:
-                nm = (it.get("name") or "").strip()
-                p  = _to_float_none(it.get("protein"))
-                c  = _to_float_none(it.get("carbs"))
-                k  = _to_int_none(it.get("calories"))
-                if nm or p is not None or c is not None or k is not None:
-                    items_in.append({
-                        "name": nm, "protein": p or 0.0, "carbs": c or 0.0, "calories": k or 0
-                    })
+            if inserted == 0:
+                db.execute("DELETE FROM meal_days WHERE id=?", (day["id"],))
 
-            if not meal_name and not items_in:
-                continue
+            flash("Meals saved.")
+            return redirect(url_for("meals_view", d=d))
 
-            db.execute("INSERT INTO meals (day_id, name, ord) VALUES (?, ?, ?)", (day["id"], meal_name, i))
-            meal_id = db.query_one("SELECT id FROM meals WHERE day_id=? AND ord=?", (day["id"], i))["id"]
-            saved_meals += 1
+        is_lowcarb, is_highcarb, suggested_carbs = _carb_flags(uid, d)
+        return render_template("meals.html", d=d, meals=meals_state,
+                               is_lowcarb=is_lowcarb, is_highcarb=is_highcarb, suggested_carbs=suggested_carbs)
 
-            for it in items_in:
-                name_to_save = (it["name"] or "").strip()
-                if MI_HAS_NAME:
-                    db.execute(
-                        "INSERT INTO meal_items (meal_id, name, protein, carbs, calories) VALUES (?,?,?,?,?)",
-                        (meal_id, name_to_save, it["protein"], it["carbs"], it["calories"])
-                    )
-                elif MI_HAS_FOOD:
-                    if name_to_save == "":
-                        name_to_save = "-"  
-                    db.execute(
-                        "INSERT INTO meal_items (meal_id, food, protein, carbs, calories) VALUES (?,?,?,?,?)",
-                        (meal_id, name_to_save, it["protein"], it["carbs"], it["calories"])
-                    )
-                else:
-                    db.execute(
-                        "INSERT INTO meal_items (meal_id, protein, carbs, calories) VALUES (?,?,?,?)",
-                        (meal_id, it["protein"], it["carbs"], it["calories"])
-                    )
-
-        if saved_meals == 0:
-            db.execute("DELETE FROM meal_days WHERE id=?", (day["id"],))
-
-        return jsonify({"ok": True})
-
-    day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (uid, d))
-    meals = []
-    if day:
-        for mrow in db.query("SELECT id, name FROM meals WHERE day_id=? ORDER BY ord", (day["id"],)):
-            if MI_HAS_NAME and MI_HAS_FOOD:
-                q = "SELECT COALESCE(name, food) AS name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
-            elif MI_HAS_NAME:
-                q = "SELECT name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
-            elif MI_HAS_FOOD:
-                q = "SELECT food AS name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
-            else:
-                q = "SELECT '' AS name, protein, carbs, calories FROM meal_items WHERE meal_id=?"
-            items = db.query(q, (mrow["id"],))
-            meals.append({"name": mrow["name"], "items": items})
-
-    return render_template(
-        "meals.html",
-        d=d,
-        meals=meals,
-        is_lowcarb=is_lowcarb,
-        is_highcarb=is_highcarb,
-        suggested_carbs=suggested_carbs
-    )
+    meals = load_meals_from_db() or [{"name": "", "items": []}]
+    is_lowcarb, is_highcarb, suggested_carbs = _carb_flags(uid, d)
+    return render_template("meals.html", d=d, meals=meals,
+                           is_lowcarb=is_lowcarb, is_highcarb=is_highcarb, suggested_carbs=suggested_carbs)
 
 if __name__ == "__main__":
     app.run(debug=True)
