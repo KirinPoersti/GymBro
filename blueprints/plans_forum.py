@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, abort
 
 from services.auth import login_required
-from services.plans_forum import list_posts, create_post, get_post
+from services.plans_forum import list_posts, create_post, get_post, like_post
 
 
 bp = Blueprint("plans_forum_bp", __name__)
@@ -9,7 +9,8 @@ bp = Blueprint("plans_forum_bp", __name__)
 
 @bp.route("/plans-forum", methods=["GET"], endpoint="plans_forum")
 def plans_forum():
-    posts = list_posts()
+    uid = session.get("user_id")
+    posts = list_posts(current_user_id=uid)
     return render_template("plans_forum.html", posts=posts)
 
 
@@ -34,7 +35,7 @@ def plans_submit_post():
 @bp.get("/api/plans-forum", endpoint="api_plans_forum")
 def api_plans_forum():
     # Lightweight feed for the dashboard widget
-    posts = list_posts()
+    posts = list_posts(current_user_id=session.get("user_id"))
     return jsonify(posts)
 
 
@@ -52,3 +53,14 @@ def plans_delete(pid: int):
     if request.is_json:
         return jsonify({"ok": True})
     return redirect(url_for("plans_forum"))
+
+
+@bp.route("/plans-forum/<int:pid>/like", methods=["POST"], endpoint="plans_like")
+@login_required
+def plans_like(pid: int):
+    post = get_post(pid)
+    if not post:
+        abort(404)
+    uid = session.get("user_id")
+    res = like_post(pid, uid)
+    return jsonify({"ok": True, **res})

@@ -54,7 +54,7 @@
     pointer-events: none;     
     transition: none;
     align-items:center; justify-content:center; font-weight:700; height:44px;
-    background:#ff1500bb;
+    background:#fa6b6b;
     color:#fff;
     border:none;
     box-shadow:
@@ -62,8 +62,8 @@
       0 6px 18px rgba(0,0,0,.18);
   }
 
-  .cell.day.lowcarb { background: #ff864e; }  
-  .cell.day.highcarb { background: #55ff8e; }
+  .cell.day.lowcarb { background: #cab5ff; }  
+  .cell.day.highcarb { background: #b5ffb7; }
 
   .cell.day .num { font-weight:700; font-size:14px; color:#111; }
 
@@ -242,14 +242,14 @@
     <div class="pill-row">
       <div class="lb-panel" id="plans-forum-pill">
         <div class="lb-header">
-          <div class="lb-title">What's cookin'🍽️</div>
+          <div class="lb-title">What's Cookin'🍽️</div>
           <div class="lb-meta"><a class="pill" href="{{ url_for('plans_forum_bp.plans_forum') }}">Open forum</a></div>
         </div>
 
         <div id="pf-list" class="pf-list"></div>
         <button id="pf-more" class="pf-ellipsis" title="Show more" aria-label="Show more">&hellip;</button>
-        <a class="btn pf-submit" href="{{ url_for('plans_forum_bp.plans_submit') }}">Submit yours!</a>
       </div>
+      <a class="btn pf-submit-outside" href="{{ url_for('plans_forum_bp.plans_submit') }}">Submit yours!</a>
     </div>
   </div>
 </div>
@@ -380,6 +380,82 @@
   })();
 </script>
 
+<!-- Fallback loader for Plans forum widget (in case earlier script fails) -->
+<script>
+  (function(){
+    const list = document.getElementById('pf-list');
+    const more = document.getElementById('pf-more');
+    if(!list || !more) return;
+    if(list.children.length > 0) return; // already rendered
+
+    function cardHTML(p){
+      const items = (p.items||[]).map(it => `
+        <li><span class="nm">${it.name||''}</span><span class="nums">W ${Math.round(it.weight||0)}g &middot; P ${Math.round(it.protein||0)}g &middot; C ${Math.round(it.carbs||0)}g &middot; ${Math.round(it.calories||0)} kcal</span></li>
+      `).join('');
+      const likeBtn = `<button class="pf-like" data-id="${p.id}" ${p.liked_by_me? 'disabled':''}>❤️ <span class="cnt">${p.likes_count||0}</span></button>`;
+      return `
+        <div class="pf-card" id="post-${p.id}">
+          <div class="pf-head"><div class="pf-title">${p.title}</div><div class="pf-kcal">${p.calories_total||0}kcal</div></div>
+          <div class="pf-sub">${p.username||''}</div>
+          <ul class="pf-items">${items}</ul>
+          <div class="pf-tot">Totals: W ${Math.round(p.weight_total||0)}g &middot; P ${Math.round(p.protein_total||0)}g &middot; C ${Math.round(p.carbs_total||0)}g &middot; ${Math.round(p.calories_total||0)} kcal</div>
+          <div class="pf-actions">${likeBtn}</div>
+        </div>`;
+    }
+
+    fetch(`${window.location.origin}/api/plans-forum`, {credentials:'same-origin'})
+      .then(r=>r.json())
+      .then(rows=>{
+        list.innerHTML = '';
+        const total = Array.isArray(rows) ? rows.length : 0;
+        if(total === 0){
+          list.innerHTML = '<div class="lb-empty">No posts yet</div>';
+          more.style.display = 'none';
+          return;
+        }
+        const visibleCount = (total <= 2) ? total : 2;
+        rows.forEach((p,i)=>{
+          const el = document.createElement('div');
+          el.innerHTML = cardHTML(p);
+          const node = el.firstElementChild;
+          if(i>=visibleCount) node.style.display='none';
+          list.appendChild(node);
+        });
+        if(total <= 2){
+          if(more && more.parentElement){ more.remove(); }
+        } else {
+          more.onclick = ()=>{
+            Array.from(list.children).forEach((c,idx)=>{ if(idx>=visibleCount) c.style.display=''; });
+            more.style.display='none';
+          };
+          if(location.hash.startsWith('#post-')){ more.click(); }
+        }
+      }).catch(()=>{
+        list.innerHTML = '<div class="lb-empty">No posts yet</div>';
+        if(more && more.parentElement){ more.remove(); }
+      });
+
+    // Like handler (delegated to the pill)
+    document.getElementById('plans-forum-pill').addEventListener('click', async (e)=>{
+      const btn = e.target.closest('.pf-like');
+      if(!btn) return;
+      if(btn.disabled) return;
+      const id = btn.getAttribute('data-id');
+      try{
+        const tpl = '{{ url_for('plans_forum_bp.plans_like', pid=0) }}';
+        const url = tpl.replace('/0/', `/${id}/`);
+        const res = await fetch(url, { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: '{}' });
+        const j = await res.json();
+        if(j && j.ok){
+          const cntEl = btn.querySelector('.cnt');
+          if(cntEl && typeof j.likes_count === 'number'){ cntEl.textContent = j.likes_count; }
+          btn.disabled = true;
+        }
+      }catch(_){ /* ignore */ }
+    });
+  })();
+</script>
+
 <style>
   /* Cubic leaderboard look */
   .lb-panel{
@@ -451,6 +527,9 @@
   .pf-items .nums{ font-size:12px; color:#555; }
   .pf-tot{ margin-top:6px; font-size:12px; color:#333; }
   .pf-ellipsis{ display:block; margin:10px auto 0; width:40px; height:40px; border-radius:50%; border:none; font-size:22px; line-height:1; background: rgba(255,255,255,0.25); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.10); }
+  .pf-actions{ margin-top:8px; display:flex; justify-content:flex-end; }
+  .pf-like{ border:none; border-radius:999px; padding:6px 10px; cursor:pointer; background:#ffe9f0; box-shadow:0 1px 2px rgba(0,0,0,.08),0 8px 18px rgba(0,0,0,.10); }
+  .pf-like[disabled]{ opacity:.6; cursor:default; }
   #plans-forum-pill{width: min(760px, 92%); margin: 6px auto; background:#fff; backdrop-filter:none; -webkit-backdrop-filter:none; border:2px solid rgba(0,0,0,0.06); box-shadow:0 6px 14px rgba(0,0,0,.10), 0 18px 36px rgba(0,0,0,.12); border-radius:24px; padding:18px 20px;}  .pf-submit{display:block; width:max-content; margin:12px auto 0;}
 </style>
 {% endblock %}

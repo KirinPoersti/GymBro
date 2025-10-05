@@ -1,5 +1,5 @@
 import json
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 import db
 
@@ -20,6 +20,18 @@ def ensure_schema() -> None:
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
         CREATE INDEX IF NOT EXISTS idx_mfp_created ON meal_forum_posts(created_at DESC);
+        
+        -- Likes: one per user per post
+        CREATE TABLE IF NOT EXISTS meal_forum_likes (
+          id         INTEGER PRIMARY KEY AUTOINCREMENT,
+          post_id    INTEGER NOT NULL,
+          user_id    INTEGER NOT NULL,
+          created_at TEXT DEFAULT (datetime('now')),
+          UNIQUE(post_id, user_id),
+          FOREIGN KEY (post_id) REFERENCES meal_forum_posts(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_mfl_post ON meal_forum_likes(post_id);
         """
     )
     # Backfill weight_total if the table already existed
@@ -69,24 +81,52 @@ def create_post(user_id: int, title: str, items: List[Dict]) -> int:
     return post_id
 
 
-def list_posts(limit: int | None = None):
+def list_posts(limit: Optional[int] = None, current_user_id: Optional[int] = None):
     ensure_schema()
     lim = f" LIMIT {int(limit)}" if limit else ""
     rows = db.query(
-        "SELECT p.*, u.username FROM meal_forum_posts p JOIN users u ON u.id=p.user_id"
+        "SELECT p.*, u.username,"
+        "       COALESCE((SELECT COUNT(1) FROM meal_forum_likes l WHERE l.post_id=p.id), 0) AS likes_count"
+        "  FROM meal_forum_posts p JOIN users u ON u.id=p.user_id"
         " ORDER BY datetime(p.created_at) DESC" + lim
     )
     for r in rows:
         r["items"] = json.loads(r["items_json"]) if r.get("items_json") else []
+        if current_user_id is not None:
+            r["liked_by_me"] = bool(
+                db.query_one(
+                    "SELECT 1 AS x FROM meal_forum_likes WHERE post_id=? AND user_id=?",
+                    (r["id"], current_user_id),
+                )
+            )
     return rows
 
 
 def get_post(pid: int):
     ensure_schema()
     r = db.query_one(
-        "SELECT p.*, u.username FROM meal_forum_posts p JOIN users u ON u.id=p.user_id WHERE p.id=?",
+        "SELECT p.*, u.username,"
+        "       COALESCE((SELECT COUNT(1) FROM meal_forum_likes l WHERE l.post_id=p.id), 0) AS likes_count"
+        "  FROM meal_forum_posts p JOIN users u ON u.id=p.user_id WHERE p.id=?",
         (pid,),
     )
     if r:
         r["items"] = json.loads(r["items_json"]) if r.get("items_json") else []
     return r
+
+
+def like_post(pid: int, user_id: int) -> Dict:
+    """Attempt to like a post. Idempotent: if already liked, returns unchanged count."""
+    ensure_schema()
+    try:
+        db.execute(
+            "INSERT OR IGNORE INTO meal_forum_likes(post_id, user_id) VALUES (?,?)",
+            (pid, user_id),
+        )
+    except Exception:
+        pass
+    row = db.query_one(
+        "SELECT COUNT(1) AS c FROM meal_forum_likes WHERE post_id=?",
+        (pid,),
+    )
+    return {"likes_count": (row["c"] if row else 0)}

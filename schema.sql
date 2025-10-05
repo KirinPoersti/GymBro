@@ -89,3 +89,30 @@ CREATE INDEX IF NOT EXISTS idx_exercises_workout  ON exercises(workout_id, ord);
 CREATE INDEX IF NOT EXISTS idx_sets_exercise      ON sets(exercise_id, set_no);
 CREATE INDEX IF NOT EXISTS idx_meals_day          ON meals(day_id, ord);
 CREATE INDEX IF NOT EXISTS idx_meal_items_meal    ON meal_items(meal_id);
+
+-- Community meal plans (forum)
+CREATE TABLE IF NOT EXISTS meal_forum_posts (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id         INTEGER NOT NULL,
+  title           TEXT NOT NULL,
+  items_json      TEXT NOT NULL,
+  calories_total  INTEGER,
+  protein_total   REAL,
+  carbs_total     REAL,
+  weight_total    REAL,
+  created_at      TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_mfp_created ON meal_forum_posts(created_at DESC);
+
+-- Likes for plans: one per user per post
+CREATE TABLE IF NOT EXISTS meal_forum_likes (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  post_id    INTEGER NOT NULL,
+  user_id    INTEGER NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(post_id, user_id),
+  FOREIGN KEY (post_id) REFERENCES meal_forum_posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_mfl_post ON meal_forum_likes(post_id);

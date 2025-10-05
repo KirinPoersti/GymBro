@@ -1,4 +1,5 @@
 from flask import Flask, redirect, url_for
+from datetime import timedelta
 import config
 
 from blueprints import register_blueprints
@@ -16,6 +17,7 @@ from blueprints.auth import login as _bp_login, register as _bp_register, logout
 
 app = Flask(__name__)
 app.secret_key = config.secret_key
+app.permanent_session_lifetime = timedelta(days=30)
 
 # Register feature blueprints
 register_blueprints(app)

@@ -43,6 +43,8 @@ def login():
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             session["email"] = user["email"]
+            # Remember me: only make session permanent if checked
+            session.permanent = bool(request.form.get("remember"))
             return redirect(url_for("dashboard"))
 
         flash("Invalid username or password.")
@@ -56,4 +58,3 @@ def logout():
     session.clear()
     flash("Signed out.")
     return redirect(url_for("home"))
-
