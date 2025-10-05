@@ -11,6 +11,7 @@
   <a class="block" href="{{ url_for('logout') }}" onclick="return confirm('Are you sure you want to log out?');" aria-label="Log out">Logout</a>
   <form method="post" action="{{ url_for('settings_delete') }}"
         onsubmit="return confirm('Delete account? This cannot be undone.');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button class="block danger" type="submit">Delete account</button>
   </form>
 </div>

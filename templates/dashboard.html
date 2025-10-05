@@ -453,7 +453,6 @@
         if(more && more.parentElement){ more.remove(); }
       });
 
-    // Like/Delete handlers (delegated to the pill)
     document.getElementById('plans-forum-pill').addEventListener('click', async (e)=>{
       const like = e.target.closest('.pf-like');
       if(like){

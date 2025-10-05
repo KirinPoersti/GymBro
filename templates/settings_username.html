@@ -5,6 +5,7 @@
 <h1 class="title">Change username</h1>
 
 <form method="post" class="user-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <label for="current_username">Current username:</label>
   <input id="current_username" value="{{ current }}" disabled>
 

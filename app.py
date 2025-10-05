@@ -1,6 +1,9 @@
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, make_response
 from datetime import timedelta
 import config
+
+from flask_wtf import CSRFProtect
+from flask_wtf.csrf import generate_csrf
 
 from blueprints import register_blueprints
 from blueprints.dashboard import dashboard as _bp_dashboard, day_view as _bp_day_view, home as _bp_home
@@ -18,6 +21,15 @@ from blueprints.auth import login as _bp_login, register as _bp_register, logout
 app = Flask(__name__)
 app.secret_key = config.secret_key
 app.permanent_session_lifetime = timedelta(days=30)
+
+app.config.update(
+    WTF_CSRF_TIME_LIMIT=None,           # optional: no expiry during session
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=True,         # set True in production w/ HTTPS
+)
+
+csrf = CSRFProtect(app)
+
 
 register_blueprints(app)
 
@@ -43,6 +55,17 @@ def no_cache(resp):
     resp.headers["Expires"] = "0"
     return resp
 
+@app.after_request
+def no_cache(resp):
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    # 2) Issue a fresh CSRF token cookie for JS (double-submit cookie pattern)
+    #    - Not HttpOnly so frontend JS can read & send it in an X- header.
+    #    - SameSite=Lax to stop most cross-site posts.
+    token = generate_csrf()
+    resp.set_cookie("csrf_token", token, samesite="Lax", secure=True, httponly=False)
+    return resp
 
 if __name__ == "__main__":
     app.run(debug=True)
