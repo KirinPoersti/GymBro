@@ -25,16 +25,13 @@ def plans_submit():
 def plans_submit_post():
     data = request.get_json(silent=True) or {}
     title = (data.get("title") or "").strip()
-    # Only one plan worth of items allowed; the client will send a single list
     items = data.get("items", []) or []
     pid = create_post(session["user_id"], title, items)
-    # Include ok=1 so the forum can show a success message
     return jsonify({"ok": True, "id": pid, "url": url_for("plans_forum_bp.plans_forum") + f"?ok=1#post-{pid}"})
 
 
 @bp.get("/api/plans-forum", endpoint="api_plans_forum")
 def api_plans_forum():
-    # Lightweight feed for the dashboard widget
     posts = list_posts(current_user_id=session.get("user_id"))
     return jsonify(posts)
 
@@ -47,7 +44,6 @@ def plans_delete(pid: int):
         abort(404)
     if post["user_id"] != session.get("user_id"):
         abort(403)
-    # Authorised: delete
     import db
     db.execute("DELETE FROM meal_forum_posts WHERE id=?", (pid,))
     if request.is_json:

@@ -8,7 +8,6 @@ from services.workouts import save_workout, fetch_workout_payload
 bp = Blueprint("training_bp", __name__)
 
 
-# --- Exercise catalog for typeahead (flattened names) ---
 EXERCISE_GROUPS = {
     "Glutes": [
         "Back Squat","Belt Squat","Box Pistol Squat","Bulgarian Split Squat, Barbell",

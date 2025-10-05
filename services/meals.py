@@ -10,7 +10,6 @@ def _meal_items_schema() -> Tuple[bool, bool, bool]:
     has_name = "name" in mi_cols
     has_food = "food" in mi_cols
     has_weight = "weight" in mi_cols
-    # If weight column missing on existing DBs, add it lazily
     if not has_weight:
         try:
             db.execute("ALTER TABLE meal_items ADD COLUMN weight REAL")
@@ -26,7 +25,6 @@ def save_meals(user_id: int, d: str, meals_payload: List[Dict]) -> None:
         db.execute("INSERT INTO meal_days (user_id, d) VALUES (?, ?)", (user_id, d))
         day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (user_id, d))
 
-    # clear old content for this day
     db.execute(
         "DELETE FROM meal_items WHERE meal_id IN (SELECT id FROM meals WHERE day_id=?)",
         (day["id"],),

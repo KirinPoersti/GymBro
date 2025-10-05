@@ -23,7 +23,6 @@ def get_or_create_workout(user_id: int, wdate: str) -> dict:
 def save_workout(user_id: int, wdate: str, exercises: List[Dict]) -> None:
     w = get_or_create_workout(user_id, wdate)
 
-    # Clear existing content
     db.execute(
         "DELETE FROM sets WHERE exercise_id IN (SELECT id FROM exercises WHERE workout_id=?)",
         (w["id"],),

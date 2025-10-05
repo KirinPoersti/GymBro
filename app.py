@@ -19,10 +19,8 @@ app = Flask(__name__)
 app.secret_key = config.secret_key
 app.permanent_session_lifetime = timedelta(days=30)
 
-# Register feature blueprints
 register_blueprints(app)
 
-# Endpoint aliases to preserve existing url_for(...) in templates
 app.add_url_rule("/", endpoint="home", view_func=_bp_home, methods=["GET"])
 app.add_url_rule("/dashboard", endpoint="dashboard", view_func=_bp_dashboard, methods=["GET"])
 app.add_url_rule("/day/<d>", endpoint="day_view", view_func=_bp_day_view, methods=["GET"])

@@ -34,7 +34,6 @@ def ensure_schema() -> None:
         CREATE INDEX IF NOT EXISTS idx_mfl_post ON meal_forum_likes(post_id);
         """
     )
-    # Backfill weight_total if the table already existed
     cols = {c["name"] for c in db.query("PRAGMA table_info(meal_forum_posts)")}
     if "weight_total" not in cols:
         db.execute("ALTER TABLE meal_forum_posts ADD COLUMN weight_total REAL")
@@ -92,6 +91,7 @@ def list_posts(limit: Optional[int] = None, current_user_id: Optional[int] = Non
     )
     for r in rows:
         r["items"] = json.loads(r["items_json"]) if r.get("items_json") else []
+        r["owned_by_me"] = (r.get("user_id") == current_user_id)
         if current_user_id is not None:
             r["liked_by_me"] = bool(
                 db.query_one(

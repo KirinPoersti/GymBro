@@ -111,7 +111,6 @@
   addBtn.addEventListener('click', () => { state.items.push({ name:'', weight:'', protein:'', carbs:'', calories:'' }); render(); });
   render();
 
-  // Robust: delegate remove clicks to the list wrapper in case of overlay issues
   itemsEl.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-delitem]');
     if(!btn) return;
@@ -134,7 +133,6 @@
     });
     const j = await res.json();
     if(j.ok){
-      // Brief confirmation before redirect
       saveBtn.textContent = 'Submitted!';
       setTimeout(()=>{ location.href = j.url; }, 600);
     } else {
