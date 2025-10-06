@@ -93,3 +93,8 @@ To verify the goals of 3rd submission, you can verify the following actions like
 ## Potential Future Development/existing issues
 - Multi Language support
 - I'm aware that JS should be left out from the code, but as for now some of the core functions are being made possible through it, I will try to somehow replace them before the last submission
+
+## Notice
+- It's known that after implementing CSRF there would be some issues with data writting in training and meal documentation.
+- To test the features, please try the branch "Version-without-CSRF"
+- the CSRF related issues will be solved before next submission
