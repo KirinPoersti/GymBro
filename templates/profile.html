@@ -8,6 +8,7 @@
 </div>
 
 <form method="post" class="profile-form" id="profile-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="grid">
     <label>Height (cm):</label>
     <input name="height_cm" id="height_cm" type="number" min="0" step="1"
