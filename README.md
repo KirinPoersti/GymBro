@@ -49,6 +49,7 @@ Install the `flask` library:
 
 ```
 pip install flask
+pip install flask-wtf
 pip install -r requirements.txt
 ```
 
