@@ -102,5 +102,5 @@ To verify the goals of 3rd submission, you can verify the following actions like
 - It's known that after implementing CSRF there would be some issues with data writting in training and meal documentation.
   - To test the features, please try the branch "Version-without-CSRF"
   - the CSRF related issues will be solved before next submission
-- It's known that after submitting a shared meal plan, it would lead to an undefined page, that's a leftover/uncleaned code of a previously existing page.
-  - it doesn't effect any functionalities, but you'd need to return to the dashboard page manually
+- ~~It's known that after submitting a shared meal plan, it would lead to an undefined page, that's a leftover/uncleaned code of a previously existing page.~~ (Fixed)
+  - ~~it doesn't effect any functionalities, but you'd need to return to the dashboard page manually~~
