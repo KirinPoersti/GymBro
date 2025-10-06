@@ -45,6 +45,9 @@ The calendar highlights training days with ⭕ and colors cells according to car
 
 ## 🛠 Installation
 
+Download the code of the branch "Version-without-CSRF" (6.20.2025)
+- and extract it
+
 Install the `flask` library:
 
 ```
@@ -95,7 +98,9 @@ To verify the goals of 3rd submission, you can verify the following actions like
 - Multi Language support
 - I'm aware that JS should be left out from the code, but as for now some of the core functions are being made possible through it, I will try to somehow replace them before the last submission
 
-## Notice
+## Notice/known issues & bugs
 - It's known that after implementing CSRF there would be some issues with data writting in training and meal documentation.
-- To test the features, please try the branch "Version-without-CSRF"
-- the CSRF related issues will be solved before next submission
+  - To test the features, please try the branch "Version-without-CSRF"
+  - the CSRF related issues will be solved before next submission
+- It's known that after submitting a shared meal plan, it would lead to an undefined page, that's a leftover/uncleaned code of a previously existing page.
+  - it doesn't effect any functionalities, but you'd need to return to the dashboard page manually
