@@ -27,7 +27,7 @@ def plans_submit_post():
     title = (data.get("title") or "").strip()
     items = data.get("items", []) or []
     pid = create_post(session["user_id"], title, items)
-    return jsonify({"ok": True, "id": pid, "url": url_for("plans_forum_bp.plans_forum") + f"?ok=1#post-{pid}"})
+    return jsonify({"ok": True, "id": pid, "url": url_for("dashboard") + f"?ok=1#post-{pid}"})
 
 
 @bp.get("/api/plans-forum", endpoint="api_plans_forum")
