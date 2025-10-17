@@ -11,7 +11,6 @@ from blueprints.settings import (
     settings as _bp_settings,
     settings_username as _bp_settings_username,
     settings_password as _bp_settings_password,
-    settings_language as _bp_settings_language,
     settings_delete as _bp_settings_delete,
 )
 from blueprints.auth import login as _bp_login, register as _bp_register, logout as _bp_logout
@@ -44,7 +43,6 @@ app.add_url_rule("/profile", endpoint="profile", view_func=_bp_profile, methods=
 app.add_url_rule("/settings", endpoint="settings", view_func=_bp_settings, methods=["GET"])
 app.add_url_rule("/settings/username", endpoint="settings_username", view_func=_bp_settings_username, methods=["GET", "POST"])
 app.add_url_rule("/settings/password", endpoint="settings_password", view_func=_bp_settings_password, methods=["GET", "POST"])
-app.add_url_rule("/settings/language", endpoint="settings_language", view_func=_bp_settings_language, methods=["GET", "POST"])
 app.add_url_rule("/settings/delete", endpoint="settings_delete", view_func=_bp_settings_delete, methods=["POST"])
 
 @app.after_request

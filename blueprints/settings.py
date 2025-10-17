@@ -127,17 +127,7 @@ def settings_password():
     return render_template("settings_password.html")
 
 
-@bp.route("/settings/language", methods=["GET", "POST"], endpoint="settings_language")
-@login_required
-def settings_language():
-    uid = session["user_id"]
-    if request.method == "POST":
-        lang = request.form.get("language", "en")
-        users_svc.update_language(uid, lang)
-        flash("Language saved.")
-        return redirect(url_for("settings"))
-    current = users_svc.get_profile(uid)
-    return render_template("settings_language.html", current=current.get("language", "en"))
+# Language settings removed per product decision
 
 
 @bp.route("/settings/delete", methods=["POST"], endpoint="settings_delete")
