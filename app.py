@@ -3,7 +3,6 @@ from datetime import timedelta
 import config
 
 from flask_wtf import CSRFProtect
-from flask_wtf.csrf import generate_csrf
 
 from blueprints import register_blueprints
 from blueprints.dashboard import dashboard as _bp_dashboard, day_view as _bp_day_view, home as _bp_home
@@ -53,18 +52,6 @@ def no_cache(resp):
     resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     resp.headers["Pragma"] = "no-cache"
     resp.headers["Expires"] = "0"
-    return resp
-
-@app.after_request
-def no_cache(resp):
-    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    resp.headers["Pragma"] = "no-cache"
-    resp.headers["Expires"] = "0"
-    # 2) Issue a fresh CSRF token cookie for JS (double-submit cookie pattern)
-    #    - Not HttpOnly so frontend JS can read & send it in an X- header.
-    #    - SameSite=Lax to stop most cross-site posts.
-    token = generate_csrf()
-    resp.set_cookie("csrf_token", token, samesite="Lax", secure=True, httponly=False)
     return resp
 
 if __name__ == "__main__":

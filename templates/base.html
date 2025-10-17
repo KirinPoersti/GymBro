@@ -250,15 +250,7 @@
     }
 
   </style>
-  <script>
-    (function(){
-      function getCookie(name){
-        const m = document.cookie.match(new RegExp('(?:^|; )'+name.replace(/([.$?*|{}()\[\]\\\/\+^])/g,'\\$1')+'=([^;]*)'));
-        return m ? decodeURIComponent(m[1]) : null;
-      }
-      window.getCsrfToken = function(){ return getCookie('csrf_token'); };
-    })();
-  </script>
+  {# No JS needed: use Flask-WTF's {{ csrf_token() }} in forms #}
 </head>
 
 <body>
