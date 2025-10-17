@@ -128,7 +128,7 @@
       .map(it => ({ name:(it.name||'').trim(), weight:it.weight, protein:it.protein, carbs:it.carbs, calories:it.calories }));
     saveBtn.disabled = true; saveBtn.textContent = 'Submitting…';
     const res = await fetch('{{ url_for('plans_forum_bp.plans_submit_post') }}', {
-      method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'},
+      method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json','X-CSRFToken': (window.getCsrfToken && window.getCsrfToken()) || ''},
       body: JSON.stringify({ title, items })
     });
     const j = await res.json();

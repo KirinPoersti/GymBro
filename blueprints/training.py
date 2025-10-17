@@ -113,7 +113,10 @@ def training(d: str):
     if request.method == "POST":
         data = request.get_json(silent=True) or {}
         exercises = data.get("exercises", [])
-        save_workout(uid, d, exercises)
+        try:
+            save_workout(uid, d, exercises)
+        except ValueError:
+            return (jsonify({"ok": False, "error": "invalid_user"}), 401)
 
         if request.is_json:
             return jsonify({"ok": True})

@@ -26,7 +26,10 @@ def plans_submit_post():
     data = request.get_json(silent=True) or {}
     title = (data.get("title") or "").strip()
     items = data.get("items", []) or []
-    pid = create_post(session["user_id"], title, items)
+    try:
+        pid = create_post(session["user_id"], title, items)
+    except ValueError:
+        return (jsonify({"ok": False, "error": "invalid_user"}), 401)
     return jsonify({"ok": True, "id": pid, "url": url_for("dashboard") + f"?ok=1#post-{pid}"})
 
 

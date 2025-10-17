@@ -461,7 +461,7 @@
         try{
           const tpl = '{{ url_for('plans_forum_bp.plans_like', pid=0) }}';
           const url = tpl.replace('/0/', `/${id}/`);
-          const res = await fetch(url, { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: '{}' });
+          const res = await fetch(url, { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRFToken': (window.getCsrfToken && window.getCsrfToken()) || ''}, body: '{}' });
           const j = await res.json();
           if(j && j.ok){
             const cntEl = like.querySelector('.cnt');
@@ -478,7 +478,7 @@
         try{
           const tpl = '{{ url_for('plans_forum_bp.plans_delete', pid=0) }}';
           const url = tpl.replace('/0/', `/${id}/`);
-          const res = await fetch(url, { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: '{}' });
+          const res = await fetch(url, { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-Token': (window.getCsrfToken && window.getCsrfToken()) || ''}, body: '{}' });
           if(res.ok){
             const card = document.getElementById(`post-${id}`);
             if(card) card.remove();

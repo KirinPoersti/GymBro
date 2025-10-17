@@ -20,6 +20,9 @@ def _meal_items_schema() -> Tuple[bool, bool, bool]:
 
 
 def save_meals(user_id: int, d: str, meals_payload: List[Dict]) -> None:
+    # Ensure user exists to prevent FK errors on clean DB or stale sessions
+    if not db.query_one("SELECT id FROM users WHERE id=?", (user_id,)):
+        raise ValueError("Invalid user for meals save")
     day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (user_id, d))
     if not day:
         db.execute("INSERT INTO meal_days (user_id, d) VALUES (?, ?)", (user_id, d))

@@ -4,6 +4,9 @@ import db
 
 
 def get_or_create_workout(user_id: int, wdate: str) -> dict:
+    # Ensure parent user exists to prevent FK errors
+    if not db.query_one("SELECT id FROM users WHERE id=?", (user_id,)):
+        raise ValueError("Invalid user for workout creation")
     w = db.query_one(
         "SELECT * FROM workouts WHERE user_id=? AND wdate=?",
         (user_id, wdate),

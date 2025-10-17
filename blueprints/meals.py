@@ -22,7 +22,10 @@ def meals_view(d: str):
     if request.method == "POST":
         data = request.get_json(silent=True) or {}
         meals_payload = data.get("meals", []) or []
-        save_meals(uid, d, meals_payload)
+        try:
+            save_meals(uid, d, meals_payload)
+        except ValueError:
+            return (jsonify({"ok": False, "error": "invalid_user"}), 401)
         return jsonify({"ok": True})
 
     meals = fetch_meals(uid, d)
