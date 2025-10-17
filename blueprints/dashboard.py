@@ -2,10 +2,11 @@ from datetime import date, datetime
 from flask import Blueprint, render_template, request, redirect, url_for, session, abort, jsonify
 
 from services.auth import login_required
-from services.dates import month_grid
+from services.dates import month_grid, week_dates
 from services.workouts import workout_dates_for_range
 from services.users import low_carb_cycle_info
 from services.leaderboard import reps_leaderboard
+from services.plans_forum import list_posts
 
 
 bp = Blueprint("dashboard_bp", __name__)
@@ -62,6 +63,16 @@ def dashboard():
                 elif r == 4:
                     highcarb_dates.add(d.isoformat())
 
+    # Compute current week (Mon-Sun) for leaderboard
+    _week = week_dates(0)
+
+    # Compute current week (Mon-Sun) for leaderboard
+    _week = week_dates(0)
+
+    # Plans forum posts (server-rendered, no JS)
+    pf_all = (request.args.get("pf_all") == "1")
+    pf_posts = list_posts(current_user_id=session.get("user_id"))
+
     return render_template(
         "dashboard.html",
         grid=grid,
@@ -75,6 +86,14 @@ def dashboard():
         workout_dates=workout_dates,
         lowcarb_dates=lowcarb_dates,
         highcarb_dates=highcarb_dates,
+        # Leaderboard (server-rendered, no JS)
+        lb_week=today.isocalendar()[1],
+        lb_start=_week[0].isoformat(),
+        lb_end=_week[-1].isoformat(),
+        lb_rows=reps_leaderboard(_week[0].isoformat(), _week[-1].isoformat()),
+        # Plans forum context
+        pf_all=pf_all,
+        pf_posts=pf_posts,
     )
 
 

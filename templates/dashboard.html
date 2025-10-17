@@ -216,16 +216,31 @@
   <div class="liquidGlass-effect"></div>
   <div class="liquidGlass-tint"></div>
   <div class="liquidGlass-shine"></div>
-  <div class="liquidGlass-text">
+      <div class="liquidGlass-text">
     <div class="pill-row">
       <div class="lb-panel" id="reps-pill">
         <div class="lb-header">
           <div class="lb-title">Boss of the gym💪🏻</div>
-          <div class="lb-meta">Week <span id="lb-week">-</span></div>
+          <div class="lb-meta">Week {{ lb_week }}</div>
         </div>
 
-        <div class="lb-controls"><button class="btn" id="lb-refresh" type="button">Refresh</button></div>
-        <div id="lb-list" class="lb-list"></div>
+        <form class="lb-controls" method="get" action="{{ url_for('dashboard') }}">
+          <input type="hidden" name="y" value="{{ year }}">
+          <input type="hidden" name="m" value="{{ month }}">
+          <button class="btn" type="submit">Refresh</button>
+        </form>
+        <div class="lb-list">
+          {% if not lb_rows or lb_rows|length == 0 %}
+            <div class="lb-empty">No reps logged this week</div>
+          {% else %}
+            {% for row in lb_rows %}
+              <div class="lb-item lb-card">
+                <span class="lb-name">{{ row.username }}</span>
+                <span class="lb-score">{{ row.total_reps }} reps</span>
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
@@ -243,73 +258,58 @@
           
         </div>
 
-        <div id="pf-list" class="pf-list"></div>
-        <button id="pf-more" class="pf-ellipsis" title="Show more" aria-label="Show more">&hellip;</button>
+        <div class="pf-list">
+          {% set posts = pf_posts or [] %}
+          {% set show_all = pf_all %}
+          {% set total = posts|length %}
+          {% if total == 0 %}
+            <div class="lb-empty">No posts yet</div>
+          {% else %}
+            {% set visible = posts if show_all else posts[:2] %}
+            {% for p in visible %}
+              <div class="pf-card" id="post-{{ p.id }}">
+                <div class="pf-head"><div class="pf-title">{{ p.title }}</div><div class="pf-kcal">{{ (p.calories_total or 0)|int }}kcal</div></div>
+                <div class="pf-sub">{{ p.username or '' }}</div>
+                <ul class="pf-items">
+                  {% for it in p['items'] or [] %}
+                   <li><span class="nm">{{ it.name or '' }}</span><span class="nums">W {{ (it.weight or 0)|round|int }}g &middot; P {{ (it.protein or 0)|round|int }}g &middot; C {{ (it.carbs or 0)|round|int }}g &middot; {{ (it.calories or 0)|round|int }} kcal</span></li>
+                  {% endfor %}
+                </ul>
+                <div class="pf-tot">Totals: W {{ (p.weight_total or 0)|round|int }}g &middot; P {{ (p.protein_total or 0)|round|int }}g &middot; C {{ (p.carbs_total or 0)|round|int }}g &middot; {{ (p.calories_total or 0)|round|int }} kcal</div>
+                <div class="pf-actions">
+                  {% if p.owned_by_me %}
+                    <form method="get" action="{{ url_for('plans_forum_bp.plans_delete', pid=p.id) }}" style="margin-right:8px;">
+                      <input type="hidden" name="next" value="{{ url_for('dashboard', y=year, m=month) }}#post-{{ p.id }}">
+                      <button class="pf-del" title="Delete" aria-label="Delete">x</button>
+                    </form>
+                  {% endif %}
+                  <form method="post" action="{{ url_for('plans_forum_bp.plans_like', pid=p.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="next" value="{{ url_for('dashboard', y=year, m=month) }}#post-{{ p.id }}">
+                    <button class="pf-like" {% if p.liked_by_me %}disabled{% endif %}>❤️ <span class="cnt">{{ p.likes_count or 0 }}</span></button>
+                  </form>
+                </div>
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+        {% if (pf_posts|length > 2) and (not pf_all) %}
+        <form method="get" action="{{ url_for('dashboard') }}">
+          <input type="hidden" name="y" value="{{ year }}">
+          <input type="hidden" name="m" value="{{ month }}">
+          <input type="hidden" name="pf_all" value="1">
+          <button class="pf-ellipsis" title="Show more" aria-label="Show more">&hellip;</button>
+        </form>
+        {% endif %}
       </div>
       <a class="btn pf-submit-outside" href="{{ url_for('plans_forum_bp.plans_submit') }}">Submit yours!</a>
     </div>
   </div>
 </div>
 
-<script>
-  (function(){
-    const listEl = document.getElementById('lb-list');
-    const btn = document.getElementById('lb-refresh');
-    const weekEl = document.getElementById('lb-week');
+<!-- Leaderboard rendered server-side: JS removed -->
 
-    const today = new Date();
-    const pad = n => (n<10?'0':'') + n;
-    const toISO = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-
-    function isoWeekNumber(date){
-      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-      const dayNum = d.getUTCDay() || 7; 
-      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-      const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-      const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-      return weekNo;
-    }
-
-    function getWeekBounds(base){
-      const d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
-      const day = (d.getDay() || 7);
-      const monday = new Date(d); monday.setDate(d.getDate() - (day - 1));
-      const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
-      return { start: toISO(monday), end: toISO(sunday) };
-    }
-
-    function updateWeek(){ weekEl.textContent = isoWeekNumber(today); }
-
-    async function load(){
-      const {start, end} = getWeekBounds(today);
-      const url = new URL(`${window.location.origin}/api/leaderboard/reps`);
-      url.searchParams.set('start', start);
-      url.searchParams.set('end', end);
-      listEl.innerHTML = '<div class="lb-empty">Loading��</div>';
-      try{
-        const res = await fetch(url.toString(), {credentials:'same-origin'});
-        if(!res.ok){ listEl.innerHTML = '<div class="lb-empty">Failed to load</div>'; return; }
-        const data = await res.json();
-        if(!data || data.length === 0){ listEl.innerHTML = '<div class="lb-empty">No reps logged this week</div>'; return; }
-        listEl.innerHTML = '';
-        data.forEach((row) =>{
-          const item = document.createElement('div');
-          item.className = 'lb-item lb-card';
-          item.innerHTML = `<span class="lb-name">${row.username}</span>
-                            <span class="lb-score">${row.total_reps} reps</span>`;
-          listEl.appendChild(item);
-        });
-      }catch(e){
-        listEl.innerHTML = '<div class="lb-empty">Error loading leaderboard</div>';
-      }
-    }
-    btn.addEventListener('click', () => { updateWeek(); load(); });
-    load();
-    updateWeek();
-  })();
-</script>
-
-<script>
+<!--
   (function(){
     const list = document.getElementById('pf-list');
     const more = document.getElementById('pf-more');
@@ -382,9 +382,9 @@
         if(more && more.parentElement){ more.remove(); }
       });
   })();
-</script>
+-->
 
-<script>
+<!--
   (function(){
     const list = document.getElementById('pf-list');
     const more = document.getElementById('pf-more');
@@ -489,7 +489,7 @@
       }
     });
   })();
-</script>
+-->
 
 <style>
   .lb-panel{

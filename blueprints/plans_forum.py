@@ -39,7 +39,7 @@ def api_plans_forum():
     return jsonify(posts)
 
 
-@bp.route("/plans-forum/<int:pid>/delete", methods=["POST"], endpoint="plans_delete")
+@bp.route("/plans-forum/<int:pid>/delete", methods=["GET", "POST"], endpoint="plans_delete")
 @login_required
 def plans_delete(pid: int):
     post = get_post(pid)
@@ -47,10 +47,20 @@ def plans_delete(pid: int):
         abort(404)
     if post["user_id"] != session.get("user_id"):
         abort(403)
+
+    # Confirmation page for GET
+    if request.method == "GET" and not request.is_json:
+        nxt = request.args.get("next") or url_for("plans_forum")
+        return render_template("plans_delete_confirm.html", post=post, next_url=nxt)
+
+    # Perform delete on POST
     import db
     db.execute("DELETE FROM meal_forum_posts WHERE id=?", (pid,))
     if request.is_json:
         return jsonify({"ok": True})
+    nxt = request.form.get("next") or request.args.get("next")
+    if nxt:
+        return redirect(nxt)
     return redirect(url_for("plans_forum"))
 
 
@@ -62,4 +72,10 @@ def plans_like(pid: int):
         abort(404)
     uid = session.get("user_id")
     res = like_post(pid, uid)
-    return jsonify({"ok": True, **res})
+    if request.is_json:
+        return jsonify({"ok": True, **res})
+    nxt = request.form.get("next") or request.args.get("next")
+    if nxt:
+        return redirect(nxt)
+    # Fallback to forum list
+    return redirect(url_for("plans_forum"))

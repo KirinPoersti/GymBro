@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block header %}{% endblock %}
+{% block content %}
+<h2 class="title">Delete this plan?</h2>
+
+<div class="wrap">
+  <div class="liquidGlass-text">
+    <div class="pf-card" style="background:#fff; color:#111; border-radius:16px; padding:12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 10px 20px rgba(0,0,0,.12);">
+      <div class="pf-head" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <div class="pf-title" style="font-weight:700;">{{ post.title }}</div>
+        <div class="pf-kcal" style="font-size:12px; opacity:.7;">{{ (post.calories_total or 0)|int }} kcal</div>
+      </div>
+      <div class="pf-sub" style="font-size:12px; color:#666; margin-bottom:6px;">{{ post.username }}</div>
+      <ul class="pf-items" style="list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px;">
+        {% for it in post['items'] or [] %}
+          <li style="display:flex; align-items:center; justify-content:space-between;">
+            <span class="nm" style="font-weight:500;">{{ it.name }}</span>
+            <span class="nums" style="font-size:12px; color:#555;">W {{ (it.weight or 0)|round|int }}g · P {{ (it.protein or 0)|round|int }}g · C {{ (it.carbs or 0)|round|int }}g · {{ (it.calories or 0)|round|int }} kcal</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <form method="post" action="{{ url_for('plans_forum_bp.plans_delete', pid=post.id) }}" style="margin-top:12px; display:flex; gap:10px; justify-content:flex-end;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="next" value="{{ next_url }}">
+      <a class="nav-btn" href="{{ next_url }}" style="text-decoration:none;">Cancel</a>
+      <button class="logout" style="min-height:40px; padding:8px 16px; border:none; border-radius:14px; background:#ffe9e9; color:#111;">Delete</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
