@@ -17,20 +17,71 @@ def plans_forum():
 @bp.route("/plans-forum/submit", methods=["GET"], endpoint="plans_submit")
 @login_required
 def plans_submit():
-    return render_template("plans_submit.html")
+    # Seed a single empty row by default
+    items = [{"name": "", "weight": "", "protein": "", "carbs": "", "calories": ""}]
+    return render_template("plans_submit.html", items=items, title="")
 
 
 @bp.route("/plans-forum/submit", methods=["POST"], endpoint="plans_submit_post")
 @login_required
 def plans_submit_post():
-    data = request.get_json(silent=True) or {}
-    title = (data.get("title") or "").strip()
-    items = data.get("items", []) or []
+    # If JSON payload present, keep API behavior for compatibility
+    data = request.get_json(silent=True)
+    if data is not None:
+        title = (data.get("title") or "").strip()
+        items = data.get("items", []) or []
+        try:
+            pid = create_post(session["user_id"], title, items)
+        except ValueError:
+            return (jsonify({"ok": False, "error": "invalid_user"}), 401)
+        # Ensure new post is visible when returning to dashboard
+        return jsonify({"ok": True, "id": pid, "url": url_for("dashboard") + f"?ok=1&pf_all=1#post-{pid}"})
+
+    # Form submission (no JS)
+    title = (request.form.get("title") or "").strip()
+    names = request.form.getlist("item_name[]")
+    weights = request.form.getlist("item_weight[]")
+    proteins = request.form.getlist("item_protein[]")
+    carbs = request.form.getlist("item_carbs[]")
+    calories = request.form.getlist("item_calories[]")
+
+    items = []
+    max_len = max(len(names), len(weights), len(proteins), len(carbs), len(calories)) if any([names, weights, proteins, carbs, calories]) else 0
+    for i in range(max_len):
+        nm = names[i] if i < len(names) else ""
+        w  = weights[i] if i < len(weights) else ""
+        p  = proteins[i] if i < len(proteins) else ""
+        c  = carbs[i] if i < len(carbs) else ""
+        k  = calories[i] if i < len(calories) else ""
+        items.append({
+            "name": (nm or "").strip(),
+            "weight": w,
+            "protein": p,
+            "carbs": c,
+            "calories": k,
+        })
+
+    # Handle in-form actions (add/remove item) and re-render preserving values
+    if "add_item" in request.form:
+        items.append({"name": "", "weight": "", "protein": "", "carbs": "", "calories": ""})
+        return render_template("plans_submit.html", items=items, title=title)
+    if "remove_index" in request.form:
+        try:
+            ridx = int(request.form.get("remove_index"))
+        except Exception:
+            ridx = -1
+        if 0 <= ridx < len(items):
+            del items[ridx]
+        if not items:
+            items = [{"name": "", "weight": "", "protein": "", "carbs": "", "calories": ""}]
+        return render_template("plans_submit.html", items=items, title=title)
+
+    # Final create
     try:
         pid = create_post(session["user_id"], title, items)
     except ValueError:
         return (jsonify({"ok": False, "error": "invalid_user"}), 401)
-    return jsonify({"ok": True, "id": pid, "url": url_for("dashboard") + f"?ok=1#post-{pid}"})
+    return redirect(url_for("dashboard") + f"?ok=1&pf_all=1#post-{pid}")
 
 
 @bp.get("/api/plans-forum", endpoint="api_plans_forum")
