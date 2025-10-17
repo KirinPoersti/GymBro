@@ -18,12 +18,59 @@
     {% endif %}
   </h2>
 
-  <div id="meal-list" class="stack"></div>
-
-  <div class="actions-row">
-    <button class="btn" id="add-meal" type="button">+ Add meal</button>
-    <button class="btn" id="save" type="button">Save</button>
-  </div>
+  <form method="post" action="{{ url_for('meals_bp.meals_view', d=d) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div id="meal-list" class="stack">
+      {% set meals_list = meals if meals and meals|length else [{"name":"","items":[]}] %}
+      {% for meal in meals_list %}
+      {% set i = loop.index0 %}
+      <div class="meal-card">
+        <button class="kill-btn" name="remove_meal" value="{{ i }}" type="submit" aria-label="Delete meal">x</button>
+        <div class="meal-body">
+          <div class="meal-name-pill">
+            <input class="meal-name-input" name="meal_name[]" placeholder="Meal name" value="{{ meal.name or '' }}">
+          </div>
+          <div class="item-list" id="items-{{ i }}">
+            {% for it in meal['items'] or [] %}
+            {% set j = loop.index0 %}
+            <div class="item-panel">
+              <button class="kill-btn small" name="remove_item" value="{{ i }}-{{ j }}" type="submit" aria-label="Remove item">x</button>
+              <div class="food-name-wrap">
+                <div class="food-name-pill">
+                  <input class="food-name-input" name="item_name_{{ i }}[]" placeholder="Food item" value="{{ it.name or '' }}">
+                </div>
+              </div>
+              <div class="macro-grid">
+                <div>
+                  <div class="big-square"><input class="big-input w" name="item_weight_{{ i }}[]" type="number" min="0" step="1" value="{{ it.weight if it.weight is not none else '' }}"></div>
+                  <div class="big-label">Weight(g)</div>
+                </div>
+                <div>
+                  <div class="big-square"><input class="big-input p" name="item_protein_{{ i }}[]" type="number" min="0" step="0.1" value="{{ it.protein if it.protein is not none else '' }}"></div>
+                  <div class="big-label">Protein(g)</div>
+                </div>
+                <div>
+                  <div class="big-square"><input class="big-input c" name="item_carbs_{{ i }}[]" type="number" min="0" step="0.1" value="{{ it.carbs if it.carbs is not none else '' }}"></div>
+                  <div class="big-label">Carb(g)</div>
+                </div>
+                <div>
+                  <div class="big-square"><input class="big-input k" name="item_calories_{{ i }}[]" type="number" min="0" step="1" value="{{ it.calories if it.calories is not none else '' }}"></div>
+                  <div class="big-label">Calories(kcal)</div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <button class="add-item-bottom" name="add_item" value="{{ i }}" type="submit" aria-label="Add item">+</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="actions-row">
+      <button class="btn" name="add_meal" value="1" type="submit">+ Add meal</button>
+      <button class="btn" name="save" value="1" type="submit">Save</button>
+    </div>
+  </form>
 </div>
 
 <style>
@@ -247,137 +294,6 @@
   .actions-row{ display:flex; justify-content:center; gap:12px; margin-top:6px; }
 </style>
 
-<script>
-  'use strict';
-
-  const initial = {{ meals|tojson }};
-  const list = document.getElementById('meal-list');
-
-  function sizePill(input){
-    const min = 120, max = 420;
-    const text = input.value || input.placeholder || '';
-    const w = Math.max(min, Math.min(max, 22 + text.length * 9));
-    const pill = input.closest('.meal-name-pill, .food-name-pill');
-    if (pill) pill.style.width = w + 'px';
-  }
-  function wirePillAutosize(input){
-    sizePill(input);
-    input.addEventListener('input', () => sizePill(input));
-  }
-
-  function render(){
-    list.innerHTML = '';
-
-    state.meals.forEach((meal, idx) => {
-      const card = document.createElement('div');
-      card.className = 'meal-card';
-      card.innerHTML = `
-        <button class="kill-btn" type="button" data-del="${idx}" aria-label="Delete meal">x</button>
-        <div class="meal-body">
-          <div class="meal-name-pill">
-            <input class="meal-name-input" placeholder="Meal name" value="${meal.name || ''}">
-          </div>
-          <div class="item-list" id="items-${idx}"></div>
-          <button class="add-item-bottom" type="button" data-additem="${idx}" aria-label="Add item">+</button>
-        </div>
-      `;
-      list.appendChild(card);
-
-      const nameInput = card.querySelector('.meal-name-input');
-      nameInput.oninput = e => { meal.name = e.target.value; sizePill(nameInput); };
-      wirePillAutosize(nameInput);
-
-      card.querySelector('[data-del]').onclick = () => { state.meals.splice(idx, 1); render(); };
-
-      const itemsEl = card.querySelector('#items-' + idx);
-      meal.items.forEach((it, j) => {
-        const panel = document.createElement('div');
-        panel.className = 'item-panel';
-        panel.innerHTML = `
-          <button class="kill-btn small" type="button" data-delitem="${idx}-${j}" aria-label="Remove item">x</button>
-          <div class="food-name-wrap">
-            <div class="food-name-pill">
-              <input class="food-name-input" placeholder="Food item" value="${it.name || ''}">
-            </div>
-          </div>
-          <div class="macro-grid">
-            <div>
-              <div class="big-square"><input class="big-input w" type="number" min="0" step="1" value="${it.weight ?? ''}"></div>
-              <div class="big-label">Weight(g)</div>
-            </div>
-            <div>
-              <div class="big-square"><input class="big-input p" type="number" min="0" step="0.1" value="${it.protein ?? ''}"></div>
-              <div class="big-label">Protein(g)</div>
-            </div>
-            <div>
-              <div class="big-square"><input class="big-input c" type="number" min="0" step="0.1" value="${it.carbs ?? ''}"></div>
-              <div class="big-label">Carb(g)</div>
-            </div>
-            <div>
-              <div class="big-square"><input class="big-input k" type="number" min="0" step="1" value="${it.calories ?? ''}"></div>
-              <div class="big-label">Calories(kcal)</div>
-            </div>
-          </div>
-        `;
-        itemsEl.appendChild(panel);
-
-        const foodInput = panel.querySelector('.food-name-input');
-        foodInput.oninput = e => { it.name = e.target.value; sizePill(foodInput); };
-        wirePillAutosize(foodInput);
-
-        const wI = panel.querySelector('.w');
-        const pI = panel.querySelector('.p');
-        const cI = panel.querySelector('.c');
-        const kI = panel.querySelector('.k');
-        wI.oninput = e => it.weight  = e.target.value;
-        pI.oninput = e => it.protein  = e.target.value;
-        cI.oninput = e => it.carbs    = e.target.value;
-        kI.oninput = e => it.calories = e.target.value;
-
-        panel.querySelector('[data-delitem]').onclick = () => { meal.items.splice(j, 1); render(); };
-      });
-
-      card.querySelector('[data-additem]').onclick = () => {
-        meal.items.push({ name:'', weight:'', protein:'', carbs:'', calories:'' });
-        render();
-      };
-    });
-  }
-
-  const state = { meals: (initial && initial.length ? initial : [{ name:'', items:[] }]) };
-  render();
-
-  document.getElementById('add-meal').onclick = () => {
-    state.meals.push({ name:'', items:[] });
-    render();
-  };
-
-  document.getElementById('save').onclick = async () => {
-    const payload = {
-      meals: state.meals
-        .filter(m => (m.name || '').trim() || m.items.length)
-        .map(m => ({
-          name: (m.name || '').trim(),
-          items: m.items
-            .filter(it =>
-              it.protein !== '' || it.carbs !== '' || it.calories !== '' || (it.name || '').trim()
-            )
-            .map(it => ({
-              name: (it.name || '').trim(),
-              protein: it.protein,
-              carbs: it.carbs,
-              calories: it.calories
-            }))
-        }))
-    };
-
-    const r = await fetch(location.pathname, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': (window.getCsrfToken && window.getCsrfToken()) || '' },
-      body: JSON.stringify(payload)
-    });
-    alert(r.ok ? 'Saved ✅' : 'Save failed');
-  };
-</script>
+<!-- Meals editor rendered server-side; JS removed -->
 
 {% endblock %}
