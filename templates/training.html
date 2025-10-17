@@ -10,12 +10,59 @@
 <div class="train-wrap">
   <h2 class="train-title">{{ d }} – Training</h2>
 
-  <div id="ex-list" class="stack"></div>
-
-  <div class="actions-row">
-    <button class="btn" id="add-ex">+ Add exercise</button>
-    <button class="btn" id="save">Save</button>
-  </div>
+  <form method="post" action="{{ url_for('training_bp.training', d=d) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div id="ex-list" class="stack">
+      {% set ex_list = exercises if exercises and exercises|length else [{"name":"","group":"All","sets":[]}] %}
+      {% for ex in ex_list %}
+      {% set i = loop.index0 %}
+      <div class="ex-card">
+        <button class="kill-ex" name="remove_ex" value="{{ i }}">x</button>
+        <div class="ex-body">
+          <div class="ex-name-wrap">
+            <div class="typeahead-wrap ex-pill">
+              <select class="ex-group" name="ex_group[]">
+                {% set grp = ex.get('group','All') %}
+                {% for g in ['All','Glutes','Shoulders','Quads','Chest','Hamstrings','Triceps','Calves','Biceps','Abs','Back'] %}
+                  <option {% if grp==g %}selected{% endif %}>{{ g }}</option>
+                {% endfor %}
+              </select>
+              <input class="ex-name" name="ex_name[]" placeholder="Exercise" value="{{ ex.get('name','') }}">
+            </div>
+          </div>
+          <div class="set-list" id="sets-{{ i }}">
+            {% for s in ex.get('sets',[]) %}
+            {% set j = loop.index0 %}
+            <div class="set-panel">
+              <button class="kill-set" name="remove_set" value="{{ i }}-{{ j }}">x</button>
+              <div class="set-title">Set {{ j + 1 }}</div>
+              <div class="set-grid">
+                <div>
+                  <div class="big-square">
+                    <input class="big-input" name="set_weight_{{ i }}[]" type="number" min="0" step="0.5" value="{{ s.weight if s.weight is not none else '' }}">
+                  </div>
+                  <div class="big-label">kg</div>
+                </div>
+                <div>
+                  <div class="big-square">
+                    <input class="big-input" name="set_reps_{{ i }}[]" type="number" min="0" step="1" value="{{ s.reps if s.reps is not none else '' }}">
+                  </div>
+                  <div class="big-label">reps</div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <button class="add-set-bottom" name="add_set" value="{{ i }}">+</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="actions-row">
+      <button class="btn" name="add_ex" value="1">+ Add exercise</button>
+      <button class="btn" name="save" value="1">Save</button>
+    </div>
+  </form>
 </div>
 
 <style>
@@ -355,262 +402,5 @@
     }
   }
 </style>
-
-<script>
-  let currentGroup = 'All';
-
-  const mg = document.getElementById('muscle-group');
-  if (mg) {
-    mg.addEventListener('change', (e) => {
-      currentGroup = e.target.value || 'All';
-    });
-  }
-
-  const initial = {{ exercises|tojson }};
-  const list = document.getElementById('ex-list');
-
-  function sizePill(input){
-    const min  = 110;          
-    const max  = 420;
-    const text = input.value || input.placeholder || '';
-    const w    = Math.max(min, Math.min(max, 18 + text.length * 9));
-
-    input.style.width = w + 'px';
-  }
-
-  function wirePillAutosize(input){
-    sizePill(input);
-    input.addEventListener('input', () => sizePill(input));
-  }
-
-  function wirePillAutosize(input){
-    sizePill(input);
-    input.addEventListener('input', () => sizePill(input));
-  }
-
-  const debounce = (fn, ms = 150) => {
-    let t;
-    return (...args) => {
-      clearTimeout(t);
-      t = setTimeout(() => fn(...args), ms);
-    };
-  };
-
-  function attachTypeahead(input, getGroup){
-  if (input._hasTypeahead) return;
-  input._hasTypeahead = true;
-
-  const wrap = input.closest('.typeahead-wrap') || input.parentElement;
-  const dd   = document.createElement('div');
-  dd.className   = 'typeahead';
-  dd.style.display = 'none';
-  wrap.appendChild(dd);
-
-  let activeIndex = -1;
-  let items       = [];
-
-  const show = () => { dd.style.display = items.length ? 'block' : 'none'; };
-  const hide = () => { dd.style.display = 'none'; activeIndex = -1; };
-
-  function renderDD(list = []) {
-    items = list;
-    dd.innerHTML = '';
-    items.forEach((name, i) => {
-      const el = document.createElement('div');
-      el.className  = 'typeahead-item' + (i === activeIndex ? ' active' : '');
-      el.textContent = name;
-      el.onclick     = () => {
-        input.value = name;
-        input.dispatchEvent(new Event('input'));
-        hide();
-      };
-      dd.appendChild(el);
-    });
-    show();
-  }
-
-  const fetchSuggestions = debounce(async (q) => {
-    const group = (getGroup && getGroup()) || 'All';
-    try {
-      const r = await fetch(`/api/exercises?q=${encodeURIComponent(q)}&group=${encodeURIComponent(group)}`);
-      if (!r.ok) { renderDD([]); return; }
-      const data = await r.json();
-      renderDD(data);
-    } catch {
-      renderDD([]);
-    }
-  }, 120);
-
-
-  input.addEventListener('focus', () => {
-    fetchSuggestions(input.value || '');
-  });
-
-
-  input.addEventListener('input', (e) => {
-    activeIndex = -1;
-    fetchSuggestions(e.target.value || '');
-  });
-
-  input.addEventListener('keydown', (e) => {
-    if (dd.style.display === 'none') return;
-    const total = items.length;
-    if (!total) return;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      activeIndex = (activeIndex + 1) % total;
-      updateActive();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      activeIndex = (activeIndex - 1 + total) % total;
-      updateActive();
-    } else if (e.key === 'Enter') {
-      if (activeIndex >= 0) {
-        e.preventDefault();
-        input.value = items[activeIndex];
-        input.dispatchEvent(new Event('input'));
-        hide();
-      }
-    } else if (e.key === 'Escape') {
-      hide();
-    }
-  });
-
-  function updateActive(){
-    [...dd.children].forEach((el, idx) => el.classList.toggle('active', idx === activeIndex));
-  }
-
-  input.addEventListener('blur', () => setTimeout(hide, 120));
-  dd.addEventListener('mousedown', (e) => e.preventDefault());
-}
-
-  function render(){
-    list.innerHTML = '';
-
-    state.exercises.forEach((ex, idx) => {
-      const card = document.createElement('div');
-      card.className = 'ex-card';
-      card.innerHTML = `
-        <button class="kill-ex" data-del="${idx}">x</button>
-
-        <div class="ex-body">
-          <div class="ex-name-wrap">
-            <div class="typeahead-wrap ex-pill">
-              <select class="ex-group">
-                <option>All</option>
-                <option>Glutes</option>
-                <option>Shoulders</option>
-                <option>Quads</option>
-                <option>Chest</option>
-                <option>Hamstrings</option>
-                <option>Triceps</option>
-                <option>Calves</option>
-                <option>Biceps</option>
-                <option>Abs</option>
-                <option>Back</option>
-              </select>
-              <input class="ex-name" placeholder="Exercise" value="${ex.name || ''}">
-            </div>
-          </div>
-
-          <div class="set-list" id="sets-${idx}"></div>
-
-          <button class="add-set-bottom" data-addset="${idx}">+</button>
-        </div>
-      `;
-      list.appendChild(card);
-
-      const nameInput = card.querySelector('.ex-name');
-      nameInput.oninput = (e) => {
-        ex.name = e.target.value;
-        sizePill(nameInput);
-      };
-      wirePillAutosize(nameInput);
-      attachTypeahead(nameInput, () => ex.group || 'All');
-
-      const groupSel = card.querySelector('.ex-group');
-      groupSel.value  = ex.group || 'All';
-      groupSel.onchange = (e) => {
-        ex.group = e.target.value || 'All';
-        nameInput.dispatchEvent(new Event('input'));
-      };
-
-      card.querySelector('.kill-ex').onclick = () => {
-        state.exercises.splice(idx, 1);
-        render();
-      };
-
-      const setsEl = card.querySelector('#sets-' + idx);
-      ex.sets.forEach((s, sidx) => {
-        const panel = document.createElement('div');
-        panel.className = 'set-panel';
-        panel.innerHTML = `
-          <button class="kill-set" data-delset="${idx}-${sidx}">x</button>
-          <div class="set-title">Set ${sidx + 1}</div>
-          <div class="set-grid">
-            <div>
-              <div class="big-square">
-                <input class="big-input" type="number" min="0" step="0.5" value="${s.weight ?? ''}">
-              </div>
-              <div class="big-label">kg</div>
-            </div>
-            <div>
-              <div class="big-square">
-                <input class="big-input" type="number" min="0" step="1" value="${s.reps ?? ''}">
-              </div>
-              <div class="big-label">reps</div>
-            </div>
-          </div>
-        `;
-        setsEl.appendChild(panel);
-
-        const [wI, rI] = panel.querySelectorAll('.big-input');
-        wI.oninput = (e) => s.weight = e.target.value;
-        rI.oninput = (e) => s.reps   = e.target.value;
-
-        panel.querySelector('[data-delset]').onclick = () => {
-          ex.sets.splice(sidx, 1);
-          render();
-        };
-      });
-
-      card.querySelector('[data-addset]').onclick = () => {
-        ex.sets.push({ weight: '', reps: '' });
-        render();
-      };
-    });
-  }
-
-  const state = {
-    exercises: (initial && initial.length ? initial : [{ name: '', sets: [] }])
-  };
-
-  render();
-
-  document.getElementById('add-ex').onclick = () => {
-    state.exercises.push({ name: '', sets: [] });
-    render();
-  };
-
-  document.getElementById('save').onclick = async () => {
-    const payload = {
-      exercises: state.exercises
-        .filter(e => (e.name || '').trim() || e.sets.length)
-        .map(e => ({
-          name: (e.name || '').trim(),
-          sets: e.sets.filter(s => (s.reps !== '' || s.weight !== '')),
-        }))
-    };
-
-    const r = await fetch(location.pathname, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': (window.getCsrfToken && window.getCsrfToken()) || '' },
-      body: JSON.stringify(payload)
-    });
-
-    alert(r.ok ? 'Saved ✅' : 'Save failed');
-  };
-</script>
 
 {% endblock %}

@@ -111,16 +111,75 @@ def training(d: str):
     uid = session["user_id"]
 
     if request.method == "POST":
-        data = request.get_json(silent=True) or {}
-        exercises = data.get("exercises", [])
-        try:
-            save_workout(uid, d, exercises)
-        except ValueError:
-            return (jsonify({"ok": False, "error": "invalid_user"}), 401)
-
-        if request.is_json:
+        # Legacy JSON submission
+        data = request.get_json(silent=True)
+        if data is not None:
+            exercises = data.get("exercises", [])
+            try:
+                save_workout(uid, d, exercises)
+            except ValueError:
+                return (jsonify({"ok": False, "error": "invalid_user"}), 401)
             return jsonify({"ok": True})
-        return redirect(url_for("training", d=d), code=303)
+
+        # No-JS form submission
+        ex_names = request.form.getlist("ex_name[]")
+        ex_groups = request.form.getlist("ex_group[]")
+        exercises_state = []
+        for i, nm in enumerate(ex_names):
+            sets = []
+            w_list = request.form.getlist(f"set_weight_{i}[]")
+            r_list = request.form.getlist(f"set_reps_{i}[]")
+            max_len = max(len(w_list), len(r_list)) if (w_list or r_list) else 0
+            for j in range(max_len):
+                sets.append({
+                    "weight": (w_list[j] if j < len(w_list) else ""),
+                    "reps": (r_list[j] if j < len(r_list) else ""),
+                })
+            exercises_state.append({
+                "name": nm,
+                "group": (ex_groups[i] if i < len(ex_groups) else "All"),
+                "sets": sets,
+            })
+
+        # Handle UI actions
+        if "add_ex" in request.form:
+            exercises_state.append({"name": "", "group": "All", "sets": []})
+            return render_template("training.html", d=d, exercises=exercises_state)
+        if "remove_ex" in request.form:
+            try:
+                ridx = int(request.form.get("remove_ex"))
+            except Exception:
+                ridx = -1
+            if 0 <= ridx < len(exercises_state):
+                del exercises_state[ridx]
+            if not exercises_state:
+                exercises_state = [{"name": "", "group": "All", "sets": []}]
+            return render_template("training.html", d=d, exercises=exercises_state)
+        if "add_set" in request.form:
+            try:
+                i = int(request.form.get("add_set"))
+            except Exception:
+                i = -1
+            if 0 <= i < len(exercises_state):
+                exercises_state[i]["sets"].append({"weight": "", "reps": ""})
+            return render_template("training.html", d=d, exercises=exercises_state)
+        if "remove_set" in request.form:
+            raw = request.form.get("remove_set", "")
+            try:
+                i_s, j_s = raw.split("-", 1)
+                i, j = int(i_s), int(j_s)
+            except Exception:
+                i, j = -1, -1
+            if 0 <= i < len(exercises_state) and 0 <= j < len(exercises_state[i]["sets"]):
+                del exercises_state[i]["sets"][j]
+            return render_template("training.html", d=d, exercises=exercises_state)
+
+        # Save
+        try:
+            save_workout(uid, d, exercises_state)
+        except ValueError:
+            abort(401)
+        return redirect(url_for("training_bp.training", d=d), code=303)
 
     exercises_payload = fetch_workout_payload(uid, d)
     return render_template("training.html", d=d, exercises=exercises_payload)
