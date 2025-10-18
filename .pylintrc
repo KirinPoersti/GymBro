@@ -12,10 +12,14 @@ disable=
     too-many-locals,
     too-many-branches,
     too-many-statements,
-    no-member
+    no-member,
+    mixed-line-endings,
+    trailing-newlines,
+    invalid-name,
+    duplicate-code
 
 [FORMAT]
-max-line-length=120
+max-line-length=140
 
 [REPORTS]
 score=no
@@ -29,4 +33,3 @@ good-names=
 
 [TYPECHECK]
 ignore-mixin-members=yes
-

@@ -1,4 +1,4 @@
-from typing import Iterable, List, Dict, Tuple, Set
+from typing import List, Dict, Set
 
 import db
 
@@ -41,8 +41,8 @@ def save_workout(user_id: int, wdate: str, exercises: List[Dict]) -> None:
         for s in raw_sets:
             reps_raw = s.get("reps")
             weight_raw = s.get("weight")
-            has_reps = (reps_raw not in (None, ""))
-            has_weight = (weight_raw not in (None, ""))
+            has_reps = reps_raw not in (None, "")
+            has_weight = weight_raw not in (None, "")
             if has_reps or has_weight:
                 reps = int(reps_raw) if has_reps else None
                 weight = (

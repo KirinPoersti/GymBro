@@ -5,14 +5,14 @@ def to_float(x, default=None):
     try:
         v = float(str(x))
         return v if isfinite(v) else default
-    except Exception:
+    except (ValueError, TypeError):
         return default
 
 
 def to_int(x, default=None):
     try:
         return int(float(str(x)))
-    except Exception:
+    except (ValueError, TypeError):
         return default
 
 

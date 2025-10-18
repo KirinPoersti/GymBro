@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+﻿from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 
 from services.auth import login_required
 from services import users as users_svc
-from services.nutrition import compute_calories_and_macros, to_float, to_int
+from services.nutrition import compute_calories_and_macros, to_float
 from services.dates import valid_iso_date
 
 
@@ -24,7 +24,7 @@ def profile():
             try:
                 raw = raw.replace(",", ".")
                 return caster(raw)
-            except Exception:
+            except (ValueError, TypeError):
                 return current.get(default_key or field)
 
         h = keep_or_cast("height_cm", int)
@@ -138,4 +138,5 @@ def settings_delete():
     session.clear()
     flash("Account deleted.")
     return redirect(url_for("register"))
+
 

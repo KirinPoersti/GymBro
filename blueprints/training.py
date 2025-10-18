@@ -1,4 +1,4 @@
-from datetime import date
+﻿from datetime import date
 from flask import Blueprint, render_template, request, redirect, url_for, session, abort, jsonify
 
 from services.auth import login_required
@@ -105,7 +105,7 @@ def training(d: str):
     try:
         y, m, dd = (int(x) for x in d.split("-"))
         _ = date(y, m, dd)
-    except Exception:
+    except (ValueError, TypeError):
         abort(404)
 
     uid = session["user_id"]
@@ -148,7 +148,7 @@ def training(d: str):
         if "remove_ex" in request.form:
             try:
                 ridx = int(request.form.get("remove_ex"))
-            except Exception:
+            except (ValueError, TypeError):
                 ridx = -1
             if 0 <= ridx < len(exercises_state):
                 del exercises_state[ridx]
@@ -158,7 +158,7 @@ def training(d: str):
         if "add_set" in request.form:
             try:
                 i = int(request.form.get("add_set"))
-            except Exception:
+            except (ValueError, TypeError):
                 i = -1
             if 0 <= i < len(exercises_state):
                 exercises_state[i]["sets"].append({"weight": "", "reps": ""})
@@ -168,7 +168,7 @@ def training(d: str):
             try:
                 i_s, j_s = raw.split("-", 1)
                 i, j = int(i_s), int(j_s)
-            except Exception:
+            except (ValueError, TypeError):
                 i, j = -1, -1
             if 0 <= i < len(exercises_state) and 0 <= j < len(exercises_state[i]["sets"]):
                 del exercises_state[i]["sets"][j]
@@ -208,4 +208,6 @@ def api_exercises():
     scored.sort(key=lambda t: t[0])
 
     return jsonify([name for _, name in scored[:50]])
+
+
 

@@ -11,10 +11,11 @@ bp = Blueprint("meals_bp", __name__)
 @bp.route("/day/<d>/meals", methods=["GET", "POST"], endpoint="meals_view")
 @login_required
 def meals_view(d: str):
+    # pylint: disable=too-many-return-statements
     try:
         y, m, dd = map(int, d.split("-"))
         cur_date = date(y, m, dd)
-    except Exception:
+    except (ValueError, TypeError):
         abort(404)
 
     uid = session["user_id"]
@@ -56,35 +57,63 @@ def meals_view(d: str):
         # Handle UI actions
         if "add_meal" in request.form:
             meals_state.append({"name": "", "items": []})
-            return render_template("meals.html", d=d, meals=meals_state, is_lowcarb=is_lowcarb, is_highcarb=is_highcarb, suggested_carbs=suggested_carbs)
+            return render_template(
+                "meals.html",
+                d=d,
+                meals=meals_state,
+                is_lowcarb=is_lowcarb,
+                is_highcarb=is_highcarb,
+                suggested_carbs=suggested_carbs,
+            )
         if "remove_meal" in request.form:
             try:
                 rm = int(request.form.get("remove_meal"))
-            except Exception:
+            except (ValueError, TypeError):
                 rm = -1
             if 0 <= rm < len(meals_state):
                 del meals_state[rm]
             if not meals_state:
                 meals_state = [{"name": "", "items": []}]
-            return render_template("meals.html", d=d, meals=meals_state, is_lowcarb=is_lowcarb, is_highcarb=is_highcarb, suggested_carbs=suggested_carbs)
+            return render_template(
+                "meals.html",
+                d=d,
+                meals=meals_state,
+                is_lowcarb=is_lowcarb,
+                is_highcarb=is_highcarb,
+                suggested_carbs=suggested_carbs,
+            )
         if "add_item" in request.form:
             try:
                 mi = int(request.form.get("add_item"))
-            except Exception:
+            except (ValueError, TypeError):
                 mi = -1
             if 0 <= mi < len(meals_state):
                 meals_state[mi]["items"].append({"name": "", "weight": "", "protein": "", "carbs": "", "calories": ""})
-            return render_template("meals.html", d=d, meals=meals_state, is_lowcarb=is_lowcarb, is_highcarb=is_highcarb, suggested_carbs=suggested_carbs)
+            return render_template(
+                "meals.html",
+                d=d,
+                meals=meals_state,
+                is_lowcarb=is_lowcarb,
+                is_highcarb=is_highcarb,
+                suggested_carbs=suggested_carbs,
+            )
         if "remove_item" in request.form:
             raw = request.form.get("remove_item", "")
             try:
                 i_s, j_s = raw.split("-", 1)
                 i, j = int(i_s), int(j_s)
-            except Exception:
+            except (ValueError, TypeError):
                 i, j = -1, -1
             if 0 <= i < len(meals_state) and 0 <= j < len(meals_state[i]["items"]):
                 del meals_state[i]["items"][j]
-            return render_template("meals.html", d=d, meals=meals_state, is_lowcarb=is_lowcarb, is_highcarb=is_highcarb, suggested_carbs=suggested_carbs)
+            return render_template(
+                "meals.html",
+                d=d,
+                meals=meals_state,
+                is_lowcarb=is_lowcarb,
+                is_highcarb=is_highcarb,
+                suggested_carbs=suggested_carbs,
+            )
 
         # Save
         try:

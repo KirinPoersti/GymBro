@@ -1,8 +1,7 @@
-from flask import Flask, redirect, url_for, make_response
 from datetime import timedelta
-import config
-
+from flask import Flask
 from flask_wtf import CSRFProtect
+import config
 
 from blueprints import register_blueprints
 from blueprints.dashboard import dashboard as _bp_dashboard, day_view as _bp_day_view, home as _bp_home

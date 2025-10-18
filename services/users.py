@@ -1,5 +1,5 @@
-from datetime import datetime
-from typing import Optional, Tuple
+﻿from datetime import datetime
+from typing import Optional
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -115,7 +115,8 @@ def low_carb_cycle_info(uid: int):
     if start_s:
         try:
             start = datetime.strptime(start_s, "%Y-%m-%d").date()
-        except Exception:
+        except ValueError:
             start = None
     return start, row.get("carbs_low_g"), row.get("carbs_high_g")
+
 

@@ -7,7 +7,7 @@ import db
 def _parse_date(s: str, default: date) -> date:
     try:
         return datetime.strptime(s, "%Y-%m-%d").date()
-    except Exception:
+    except ValueError:
         return default
 
 

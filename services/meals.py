@@ -1,5 +1,6 @@
-from datetime import date as date_cls
+﻿from datetime import date as date_cls
 from typing import List, Dict, Tuple
+import sqlite3
 
 import db
 from .users import low_carb_cycle_info
@@ -14,7 +15,8 @@ def _meal_items_schema() -> Tuple[bool, bool, bool]:
         try:
             db.execute("ALTER TABLE meal_items ADD COLUMN weight REAL")
             has_weight = True
-        except Exception:
+        except sqlite3.Error:
+            # Column may already exist or migration failed; ignore gracefully
             pass
     return has_name, has_food, has_weight
 
@@ -196,10 +198,11 @@ def _to_float_none(x):
         return None
     try:
         return float(str(x).replace(",", "."))
-    except Exception:
+    except (ValueError, TypeError):
         return None
 
 
 def _to_int_none(x):
     f = _to_float_none(x)
     return int(f) if f is not None else None
+
