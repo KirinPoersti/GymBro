@@ -20,7 +20,7 @@ The calendar highlights training days with ⭕ and colors cells according to car
     - Suggested carb intake shown for low/high-carb days  
   - **Profile**: updating values saves preferences and recalculates derived targets.
 - [x] **View stored data**:
-    - Calendar shows days, 猸?for real workouts, carb cycle colors.
+    - Calendar shows days, ⭕ for real workouts, carb cycle colors.
     - Day view with Training and Meals subpages.
     - Meals page lists saved meals/items.
     - Profile page displays computed calorie/macronutrient targets.
