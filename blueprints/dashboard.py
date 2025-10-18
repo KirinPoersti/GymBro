@@ -63,13 +63,10 @@ def dashboard():
                 elif r == 4:
                     highcarb_dates.add(d.isoformat())
 
-    # Compute current week (Mon-Sun) for leaderboard
     _week = week_dates(0)
 
-    # Compute current week (Mon-Sun) for leaderboard
     _week = week_dates(0)
 
-    # Plans forum posts (server-rendered, no JS)
     pf_all = (request.args.get("pf_all") == "1")
     pf_posts = list_posts(current_user_id=session.get("user_id"))
 
@@ -86,12 +83,10 @@ def dashboard():
         workout_dates=workout_dates,
         lowcarb_dates=lowcarb_dates,
         highcarb_dates=highcarb_dates,
-        # Leaderboard (server-rendered, no JS)
         lb_week=today.isocalendar()[1],
         lb_start=_week[0].isoformat(),
         lb_end=_week[-1].isoformat(),
         lb_rows=reps_leaderboard(_week[0].isoformat(), _week[-1].isoformat()),
-        # Plans forum context
         pf_all=pf_all,
         pf_posts=pf_posts,
     )

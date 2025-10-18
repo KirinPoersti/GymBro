@@ -11,7 +11,6 @@ bp = Blueprint("meals_bp", __name__)
 @bp.route("/day/<d>/meals", methods=["GET", "POST"], endpoint="meals_view")
 @login_required
 def meals_view(d: str):
-    # pylint: disable=too-many-return-statements
     try:
         y, m, dd = map(int, d.split("-"))
         cur_date = date(y, m, dd)
@@ -19,11 +18,9 @@ def meals_view(d: str):
         abort(404)
 
     uid = session["user_id"]
-    # Carb cycle info used in both GET and POST re-renders
     is_lowcarb, is_highcarb, suggested_carbs = carb_cycle_for_date(uid, cur_date)
 
     if request.method == "POST":
-        # Support legacy JSON posts
         data = request.get_json(silent=True)
         if data is not None:
             meals_payload = data.get("meals", []) or []
@@ -33,7 +30,6 @@ def meals_view(d: str):
                 return (jsonify({"ok": False, "error": "invalid_user"}), 401)
             return jsonify({"ok": True})
 
-        # No-JS form submission: reconstruct meals from form fields
         meal_names = request.form.getlist("meal_name[]")
         meals_state = []
         for i, mn in enumerate(meal_names):
@@ -54,7 +50,6 @@ def meals_view(d: str):
                 })
             meals_state.append({"name": mn, "items": items})
 
-        # Handle UI actions
         if "add_meal" in request.form:
             meals_state.append({"name": "", "items": []})
             return render_template(
@@ -115,7 +110,6 @@ def meals_view(d: str):
                 suggested_carbs=suggested_carbs,
             )
 
-        # Save
         try:
             save_meals(uid, d, meals_state)
         except ValueError:

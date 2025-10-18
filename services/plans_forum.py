@@ -49,7 +49,6 @@ def _num(x, tp=float):
 
 
 def create_post(user_id: int, title: str, items: List[Dict]) -> int:
-    # Ensure user exists to avoid FK errors on a stale session
     if not db.query_one("SELECT id FROM users WHERE id=?", (user_id,)):
         raise ValueError("Invalid user for forum post")
     ensure_schema()

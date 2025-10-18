@@ -111,7 +111,6 @@ def training(d: str):
     uid = session["user_id"]
 
     if request.method == "POST":
-        # Legacy JSON submission
         data = request.get_json(silent=True)
         if data is not None:
             exercises = data.get("exercises", [])
@@ -121,7 +120,6 @@ def training(d: str):
                 return (jsonify({"ok": False, "error": "invalid_user"}), 401)
             return jsonify({"ok": True})
 
-        # No-JS form submission
         ex_names = request.form.getlist("ex_name[]")
         ex_groups = request.form.getlist("ex_group[]")
         exercises_state = []
@@ -141,7 +139,6 @@ def training(d: str):
                 "sets": sets,
             })
 
-        # Handle UI actions
         if "add_ex" in request.form:
             exercises_state.append({"name": "", "group": "All", "sets": []})
             return render_template("training.html", d=d, exercises=exercises_state, exercise_catalog=EXERCISE_CATALOG)
@@ -174,7 +171,6 @@ def training(d: str):
                 del exercises_state[i]["sets"][j]
             return render_template("training.html", d=d, exercises=exercises_state, exercise_catalog=EXERCISE_CATALOG)
 
-        # Save
         try:
             save_workout(uid, d, exercises_state)
         except ValueError:

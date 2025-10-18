@@ -17,7 +17,6 @@ def plans_forum():
 @bp.route("/plans-forum/submit", methods=["GET"], endpoint="plans_submit")
 @login_required
 def plans_submit():
-    # Seed a single empty row by default
     items = [{"name": "", "weight": "", "protein": "", "carbs": "", "calories": ""}]
     return render_template("plans_submit.html", items=items, title="")
 
@@ -25,7 +24,6 @@ def plans_submit():
 @bp.route("/plans-forum/submit", methods=["POST"], endpoint="plans_submit_post")
 @login_required
 def plans_submit_post():
-    # If JSON payload present, keep API behavior for compatibility
     data = request.get_json(silent=True)
     if data is not None:
         title = (data.get("title") or "").strip()
@@ -34,10 +32,8 @@ def plans_submit_post():
             pid = create_post(session["user_id"], title, items)
         except ValueError:
             return (jsonify({"ok": False, "error": "invalid_user"}), 401)
-        # Ensure new post is visible when returning to dashboard
         return jsonify({"ok": True, "id": pid, "url": url_for("dashboard") + f"?ok=1&pf_all=1#post-{pid}"})
 
-    # Form submission (no JS)
     title = (request.form.get("title") or "").strip()
     names = request.form.getlist("item_name[]")
     weights = request.form.getlist("item_weight[]")
@@ -61,7 +57,6 @@ def plans_submit_post():
             "calories": k,
         })
 
-    # Handle in-form actions (add/remove item) and re-render preserving values
     if "add_item" in request.form:
         items.append({"name": "", "weight": "", "protein": "", "carbs": "", "calories": ""})
         return render_template("plans_submit.html", items=items, title=title)
@@ -75,8 +70,7 @@ def plans_submit_post():
         if not items:
             items = [{"name": "", "weight": "", "protein": "", "carbs": "", "calories": ""}]
         return render_template("plans_submit.html", items=items, title=title)
-
-    # Final create
+    
     try:
         pid = create_post(session["user_id"], title, items)
     except ValueError:
@@ -99,12 +93,10 @@ def plans_delete(pid: int):
     if post["user_id"] != session.get("user_id"):
         abort(403)
 
-    # Confirmation page for GET
     if request.method == "GET" and not request.is_json:
         nxt = request.args.get("next") or url_for("plans_forum")
         return render_template("plans_delete_confirm.html", post=post, next_url=nxt)
 
-    # Perform delete on POST
     import db
     db.execute("DELETE FROM meal_forum_posts WHERE id=?", (pid,))
     if request.is_json:
@@ -128,5 +120,4 @@ def plans_like(pid: int):
     nxt = request.form.get("next") or request.args.get("next")
     if nxt:
         return redirect(nxt)
-    # Fallback to forum list
     return redirect(url_for("plans_forum"))

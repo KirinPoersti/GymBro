@@ -126,10 +126,6 @@ def settings_password():
 
     return render_template("settings_password.html")
 
-
-# Language settings removed per product decision
-
-
 @bp.route("/settings/delete", methods=["POST"], endpoint="settings_delete")
 @login_required
 def settings_delete():

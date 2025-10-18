@@ -16,13 +16,11 @@ def _meal_items_schema() -> Tuple[bool, bool, bool]:
             db.execute("ALTER TABLE meal_items ADD COLUMN weight REAL")
             has_weight = True
         except sqlite3.Error:
-            # Column may already exist or migration failed; ignore gracefully
             pass
     return has_name, has_food, has_weight
 
 
 def save_meals(user_id: int, d: str, meals_payload: List[Dict]) -> None:
-    # Ensure user exists to prevent FK errors on clean DB or stale sessions
     if not db.query_one("SELECT id FROM users WHERE id=?", (user_id,)):
         raise ValueError("Invalid user for meals save")
     day = db.query_one("SELECT id FROM meal_days WHERE user_id=? AND d=?", (user_id, d))
