@@ -58,3 +58,9 @@ def logout():
     session.clear()
     flash("Signed out.")
     return redirect(url_for("home"))
+
+
+@bp.route("/logout/confirm", methods=["GET"], endpoint="logout_confirm")
+def logout_confirm():
+    next_url = url_for("settings")
+    return render_template("logout_confirm.html", next_url=next_url)

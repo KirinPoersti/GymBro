@@ -7,7 +7,7 @@
 <div class="stack">
   <a class="block" href="{{ url_for('settings_username') }}">Change username</a>
   <a class="block" href="{{ url_for('settings_password') }}">Change password</a>
-  <a class="block" href="{{ url_for('logout') }}" onclick="return confirm('Are you sure you want to log out?');" aria-label="Log out">Logout</a>
+  <a class="block" href="#logout-modal" aria-label="Log out">Logout</a>
   <form method="post" action="{{ url_for('settings_delete') }}"
         onsubmit="return confirm('Delete account? This cannot be undone.');">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -62,6 +62,40 @@
 
   .block.danger[type=submit] {
     cursor: pointer;
+  }
+</style>
+
+<!-- CSS-only modal for logout confirmation -->
+<div id="logout-modal" class="modal">
+  <a class="modal-overlay" href="#" aria-label="Close"></a>
+  <div class="modal-card">
+    <h3 class="title" style="margin:0 0 10px; text-align:center;">Log out?</h3>
+    <div class="stack" style="max-width:360px; margin:0 auto;">
+      <a class="block" href="#">Cancel</a>
+      <a class="block danger" href="{{ url_for('logout') }}">Log out</a>
+    </div>
+  </div>
+  <a class="modal-close" href="#" aria-label="Close">×</a>
+  <div class="modal-shine"></div>
+  <div class="modal-tint"></div>
+  <div class="modal-blur"></div>
+  <div class="modal-shadow"></div>
+</div>
+
+<style>
+  .modal{ position:fixed; inset:0; display:none; z-index:1000; }
+  .modal:target{ display:block; }
+  .modal-overlay{ position:absolute; inset:0; background: rgba(0,0,0,0.35); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  .modal-card{
+    position: absolute; left:50%; top:50%; transform: translate(-50%, -50%);
+    width:min(520px, 92vw); padding:18px; border-radius:24px; background:#fff; color:#111;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12), 0 18px 46px rgba(0,0,0,.18);
+  }
+  .modal-close{
+    position:absolute; top:14px; right:16px; text-decoration:none; font-size:24px; color:#111;
+    background: rgba(255,255,255,0.15); border-radius:10px; width:36px; height:36px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 18px rgba(0,0,0,.10);
   }
 </style>
 

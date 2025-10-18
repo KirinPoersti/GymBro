@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block header %}{% endblock %}
+{% block content %}
+
+<h1 class="title">Confirm Logout</h1>
+
+<div class="stack" style="max-width:420px; margin:0 auto;">
+  <a class="block" href="{{ next_url }}">Cancel</a>
+  <a class="block" href="{{ url_for('logout') }}">Log out</a>
+  <div style="height:1px;"></div>
+</div>
+
+<style>
+  .stack { display:flex; flex-direction:column; gap:14px; }
+</style>
+
+{% endblock %}
+
