@@ -144,7 +144,7 @@ def training(d: str):
         # Handle UI actions
         if "add_ex" in request.form:
             exercises_state.append({"name": "", "group": "All", "sets": []})
-            return render_template("training.html", d=d, exercises=exercises_state)
+            return render_template("training.html", d=d, exercises=exercises_state, exercise_catalog=EXERCISE_CATALOG)
         if "remove_ex" in request.form:
             try:
                 ridx = int(request.form.get("remove_ex"))
@@ -154,7 +154,7 @@ def training(d: str):
                 del exercises_state[ridx]
             if not exercises_state:
                 exercises_state = [{"name": "", "group": "All", "sets": []}]
-            return render_template("training.html", d=d, exercises=exercises_state)
+            return render_template("training.html", d=d, exercises=exercises_state, exercise_catalog=EXERCISE_CATALOG)
         if "add_set" in request.form:
             try:
                 i = int(request.form.get("add_set"))
@@ -162,7 +162,7 @@ def training(d: str):
                 i = -1
             if 0 <= i < len(exercises_state):
                 exercises_state[i]["sets"].append({"weight": "", "reps": ""})
-            return render_template("training.html", d=d, exercises=exercises_state)
+            return render_template("training.html", d=d, exercises=exercises_state, exercise_catalog=EXERCISE_CATALOG)
         if "remove_set" in request.form:
             raw = request.form.get("remove_set", "")
             try:
@@ -172,7 +172,7 @@ def training(d: str):
                 i, j = -1, -1
             if 0 <= i < len(exercises_state) and 0 <= j < len(exercises_state[i]["sets"]):
                 del exercises_state[i]["sets"][j]
-            return render_template("training.html", d=d, exercises=exercises_state)
+            return render_template("training.html", d=d, exercises=exercises_state, exercise_catalog=EXERCISE_CATALOG)
 
         # Save
         try:
@@ -182,7 +182,7 @@ def training(d: str):
         return redirect(url_for("training_bp.training", d=d), code=303)
 
     exercises_payload = fetch_workout_payload(uid, d)
-    return render_template("training.html", d=d, exercises=exercises_payload)
+    return render_template("training.html", d=d, exercises=exercises_payload, exercise_catalog=EXERCISE_CATALOG)
 
 
 @bp.get("/api/exercises", endpoint="api_exercises")
