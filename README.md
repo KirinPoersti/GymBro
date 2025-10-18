@@ -16,7 +16,7 @@ The calendar highlights training days with ⭕ and colors cells according to car
     - Each workout contains exercises and sets
   - **Meals**: 
     - Add, edit, and delete meals per day
-    - Each meal can contain multiple food items with protein, carbs, and calories
+    - Each meal can contain multiple food items with weight, protein, carbs, and calories
     - Suggested carb intake shown for low/high-carb days  
   - **Profile**: updating values saves preferences and recalculates derived targets.
 - [x] **View stored data**:
@@ -31,7 +31,6 @@ The calendar highlights training days with ⭕ and colors cells according to car
 - [x] **README with setup and testing instructions**.
 - [x] **Leaderboard** that shows who's got the most reps for the week.
 - [x] **Recipe sharing section** for people to share what they are eating
-- [ ] ❗The logic part for language change isn't ready yet, what's shown is just a shell that does no changes to the UI
 
 ---
 
@@ -52,7 +51,6 @@ Install the `flask` library:
 
 ```
 pip install flask
-pip install flask-wtf
 pip install -r requirements.txt
 ```
 
@@ -94,13 +92,3 @@ To verify the goals of 3rd submission, you can verify the following actions like
   - <img width="1026" height="457" alt="image" src="https://github.com/user-attachments/assets/5cafabcb-8cc0-4fc6-bc70-f11b0020d85c" />
   - To test this part, please create 2 users and also at least 2 recipes to view the results
 
-## Potential Future Development/existing issues
-- Multi Language support
-- I'm aware that JS should be left out from the code, but as for now some of the core functions are being made possible through it, I will try to somehow replace them before the last submission
-
-## Notice/known issues & bugs
-- It's known that after implementing CSRF there would be some issues with data writting in training and meal documentation.
-  - To test the features, please try the branch "Version-without-CSRF"
-  - the CSRF related issues will be solved before next submission
-- ~~It's known that after submitting a shared meal plan, it would lead to an undefined page, that's a leftover/uncleaned code of a previously existing page.~~ (Fixed)
-  - ~~it doesn't effect any functionalities, but you'd need to return to the dashboard page manually~~
