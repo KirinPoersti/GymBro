@@ -44,7 +44,7 @@ The calendar highlights training days with ⭕ and colors cells according to car
 
 ## 🛠 Installation
 
-Download the code of the branch "Version-without-CSRF" (6.20.2025)
+Download the code of the main branch
 - and extract it
 
 Install the `flask` library:
