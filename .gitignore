@@ -4,3 +4,5 @@ codex
 *.pyc
 database.db
 .env
+reports/pylint-*.txt
+reports/pylint-*.json

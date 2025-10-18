@@ -1,0 +1,4 @@
+# Keep the directory, ignore generated reports
+*
+!.gitignore
+!.gitkeep

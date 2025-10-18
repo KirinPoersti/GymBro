@@ -1,0 +1,32 @@
+[MASTER]
+ignore=venv,static,templates,__pycache__
+jobs=0
+
+[MESSAGES CONTROL]
+disable=
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    too-few-public-methods,
+    too-many-arguments,
+    too-many-locals,
+    too-many-branches,
+    too-many-statements,
+    no-member
+
+[FORMAT]
+max-line-length=120
+
+[REPORTS]
+score=no
+
+[BASIC]
+good-names=
+    i,j,k,x,y,z,
+    d,dd,m,y,uid,pid,
+    ex,s,w,p,c,kb,
+    db,bp,r
+
+[TYPECHECK]
+ignore-mixin-members=yes
+
