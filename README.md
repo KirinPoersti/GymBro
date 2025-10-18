@@ -76,40 +76,44 @@ To verify the goals of submissions, you can verify the following actions like th
 
 - Käyttäjä pystyy luomaan tunnuksen ja kirjautumaan sisään sovellukseen.
   - This can be tested by creating an account with your email and any wanted username + password
+  <img width="466" height="519" alt="image" src="https://github.com/user-attachments/assets/f2b5a0bc-8e0e-4283-95aa-cdf96c28a795" />
+  <img width="517" height="673" alt="image" src="https://github.com/user-attachments/assets/f609ddda-7e23-4353-91b8-d4b78ce281c0" />
+  
+  - Remember to check the box for "Remember me" while logging in
 - Käyttäjä pystyy lisäämään, muokkaamaan ja poistamaan tietokohteita.
   - The user can add exercises entries and meals, and also meals to share with other users
+  <img width="605" height="385" alt="image" src="https://github.com/user-attachments/assets/a14ab50c-84c9-4b7c-9e0b-d345bd66e2cf" />
 - Käyttäjä näkee sovellukseen lisätyt tietokohteet.
   - Added entries and meals are visible in the app
 - Käyttäjä pystyy etsimään tietokohteita hakusanalla tai muulla perusteella.
   - The user can search for entered entries through the calendar in the dashboard interface.
+  <img width="1039" height="936" alt="image" src="https://github.com/user-attachments/assets/a61830c8-60e3-4ee4-9a53-f59c1032040c" />
 - Sovelluksessa on käyttäjäsivut, jotka näyttävät tilastoja ja käyttäjän lisämät tietokohteet.
   - Under this block, the leaderboard will list out users with the most amount of reps done during the week. The rep amount is being summed through user documentation.
   - To test this part, please create 2 users and also at least ONE training entry for one day.
-    <img width="1069" height="509" alt="image" src="https://github.com/user-attachments/assets/36f33101-e0dd-4f1a-87fa-ece9554874d1" />
     - By documentating your training session in the following way:
-    <img width="1003" height="503" alt="image" src="https://github.com/user-attachments/assets/e75f16c4-dcdc-48dc-adb5-6ae6d858c208" />
-     you will be able to revisit the documented training by clicking on the days with the 猸曪笍 mark.
-     <img width="937" height="337" alt="image" src="https://github.com/user-attachments/assets/33f2391b-773c-4ad1-ae91-69dbf324782e" />
+  <img width="1013" height="621" alt="image" src="https://github.com/user-attachments/assets/2330c816-aa6f-4aee-be0f-50d45e42c7a3" />
+  <img width="1003" height="503" alt="image" src="https://github.com/user-attachments/assets/e75f16c4-dcdc-48dc-adb5-6ae6d858c208" />
+     you will be able to revisit the documented training by clicking on the days with the ⭕ mark.
+  <img width="937" height="337" alt="image" src="https://github.com/user-attachments/assets/33f2391b-773c-4ad1-ae91-69dbf324782e" />
  
 - Käyttäjä pystyy valitsemaan tietokohteelle yhden tai useamman luokittelun. Mahdolliset luokat ovat tietokannassa.
   - While documentating your trainings, you're able to filter preset exercises with the dropbox
-    <img width="680" height="412" alt="image" src="https://github.com/user-attachments/assets/ba049add-08f3-40e0-8b02-33d6edf4203c" />
+  <img width="680" height="412" alt="image" src="https://github.com/user-attachments/assets/ba049add-08f3-40e0-8b02-33d6edf4203c" />
 
 - Käyttäjä pystyy lähettämän toisen käyttäjän tietokohteeseen liittyen jotain lisätietoa, joka tulee näkyviin sovelluksessa.
   - You can check diets posted by other users and give them a like. You can also submit your own to recieve feed back from the others
-  - <img width="1026" height="457" alt="image" src="https://github.com/user-attachments/assets/5cafabcb-8cc0-4fc6-bc70-f11b0020d85c" />
+  <img width="1026" height="457" alt="image" src="https://github.com/user-attachments/assets/5cafabcb-8cc0-4fc6-bc70-f11b0020d85c" />
   - To test this part, please create 2 users and also at least 2 recipes to view the results
 
 
 ## 🪮 Linting
 
 To run Pylint locally:
-
-`
+```
 pip install -r requirements.txt
 python -m pylint blueprints services app.py
-`
-
+```
 Notes:
 - The linter is configured via .pylintrc to ignore env/, static/, and 	emplates/.
 - Some warnings are relaxed to fit this codebase (docstrings, function size, etc.).
@@ -117,21 +121,13 @@ Notes:
 
 ### Lint report artifacts
 
-To generate and save lint reports under 
-eports/:
-
-`
+- To generate and save lint reports under reports/:
+```
 python scripts/lint_report.py
-`
-
-This writes:
-- 
-eports/pylint-YYYYMMDD-HHMMSS.txt (human-readable)
-- 
-eports/pylint-YYYYMMDD-HHMMSS.json (machine-parseable)
-- 
-eports/pylint-latest.txt and 
-eports/pylint-latest.json convenience copies
-
-The 
-eports/ directory is kept in the repo with a .gitkeep; individual reports are git-ignored by default.
+```
+- This writes:
+  - reports/pylint-YYYYMMDD-HHMMSS.txt (human-readable)
+  - reports/pylint-YYYYMMDD-HHMMSS.json (machine-parseable)
+  - reports/pylint-latest.txt and 
+  - reports/pylint-latest.json convenience copies
+- The reports/ directory is kept in the repo with a .gitkeep; individual reports are git-ignored by default.
