@@ -22,7 +22,7 @@ app.permanent_session_lifetime = timedelta(days=30)
 app.config.update(
     WTF_CSRF_TIME_LIMIT=None,           
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=False,        
+    SESSION_COOKIE_SECURE=False)        
 
 csrf = CSRFProtect(app)
 
