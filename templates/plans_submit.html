@@ -4,9 +4,9 @@
 
 {% block content %}
 <div class="submit-wrap">
-  <h2 class="title" style="margin-top:0">Share your plan</h2>
+  <h2 class="title" style="margin-top:0">{{ "Edit plan" if edit_post is defined else "Share your plan" }}</h2>
 
-  <form method="post" action="{{ url_for('plans_forum_bp.plans_submit_post') }}" class="meal-card plan-card">
+  <form method="post" action="{{ url_for('plans_forum_bp.plans_edit', pid=edit_post.id) if edit_post is defined else url_for('plans_forum_bp.plans_submit_post') }}" class="meal-card plan-card">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="meal-body">
       <div class="meal-name-pill">
@@ -45,7 +45,7 @@
 
       <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
         <button class="btn" type="submit" name="add_item" value="1">+ Add item</button>
-        <button id="save" class="btn">Submit</button>
+        <button id="save" class="btn">{{ "Save changes" if edit_post is defined else "Submit" }}</button>
       </div>
     </div>
   </form>

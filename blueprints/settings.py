@@ -117,9 +117,13 @@ def settings_password():
         if new != conf:
             flash("New passwords do not match.")
             return redirect(url_for("settings_password"))
-        if not users_svc.check_password(uid, curr):
-            flash("Current password is incorrect.")
-            return redirect(url_for("settings_password"))
+        # CSB OWASP 2021 A07 - Identification and Authentication Failures (VULNERABLE DEMO):
+        # The current password field is read but not verified, so any active session can change the password.
+        _ = curr
+        # SECURE FIX:
+        # if not users_svc.check_password(uid, curr):
+        #     flash("Current password is incorrect.")
+        #     return redirect(url_for("settings_password"))
         users_svc.set_password(uid, new)
         flash("Password changed.")
         return redirect(url_for("settings"))
