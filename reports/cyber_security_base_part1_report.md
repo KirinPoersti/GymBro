@@ -2,21 +2,49 @@
 
 LINK: https://github.com/KirinPoersti/GymBro
 
-Installation instructions if needed:
+This project uses the OWASP Top 10 2021 list exclusively. The application and its five vulnerabilities are intended only for local course demonstrations. Do not deploy it publicly or use real credentials.
 
-Clone the repository, install the Python requirements, initialize the SQLite database, and run the Flask app:
+Installation instructions:
+
+Install Git, Python 3.10 or newer, `pip`, and the SQLite command-line tool before continuing.
+
+Windows PowerShell:
 
 ```powershell
 git clone https://github.com/KirinPoersti/GymBro.git
 cd GymBro
-python -m venv .venv
+py -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 sqlite3 database.db ".read schema.sql"
 python app.py
 ```
 
-Then open http://127.0.0.1:5000 in a browser. The app is a workout and meal logging service with accounts, private profile data, personal workout records, meal tracking, and a public meal-plan forum. Because the app stores personal data and credentials, the security flaws below matter even though this is a small course project. The code already contains commented secure fixes beside the vulnerable examples, so each flaw links both to the problem and to the intended repair.
+Linux (Ubuntu/Debian): first install the prerequisites with `sudo apt update && sudo apt install git python3 python3-venv python3-pip sqlite3`, then run:
+
+```bash
+git clone https://github.com/KirinPoersti/GymBro.git
+cd GymBro
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+sqlite3 database.db < schema.sql
+python app.py
+```
+
+macOS: install the prerequisites using their official installers or Homebrew with `brew install git python sqlite`, then run:
+
+```bash
+git clone https://github.com/KirinPoersti/GymBro.git
+cd GymBro
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+sqlite3 database.db < schema.sql
+python app.py
+```
+
+On every platform, open http://127.0.0.1:5000 in a browser. The app is a workout and meal logging service with accounts, private profile data, personal workout records, meal tracking, and a public meal-plan forum. Because the app stores personal data and credentials, the security flaws below matter even though this is a small course project. The code already contains commented secure fixes beside the vulnerable examples, so each flaw links both to the problem and to the intended repair.
 
 FLAW 1:
 

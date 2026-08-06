@@ -1,5 +1,7 @@
 ﻿# 🏋🏿 GymBro
 
+> **Security course demo:** This version intentionally contains five OWASP Top 10 2021 vulnerabilities. Run it only locally and never use real credentials or personal information.
+
 GymBro is a lightweight **Flask** application for logging **workouts** and **meals**.  
 Users can register, log in, maintain a **profile** (height, weight, age, activity level, sex, goal), and log **workouts** (exercises + sets) as well as **meals** (meals + food items + macros).  
 From the profile, the app computes **TDEE**, protein needs, and a **carb cycling schedule** (4 low-carb days + 1 high-carb day).  
@@ -9,7 +11,7 @@ The calendar highlights training days with ⭕ and colors cells according to car
 
 ## 🚀 Features (assignment check)
 
-- [x] **User registration and login** (`/register`, `/login`, with password hashing).
+- [x] **User registration and login** (`/register`, `/login`; plaintext password handling is intentional for the A02 course demonstration, with the hashed fix commented beside it).
 - [x] **Add, edit, delete entities**:
   - **Workouts**:
     - Add, edit, and delete workouts per day
@@ -36,40 +38,57 @@ The calendar highlights training days with ⭕ and colors cells according to car
 
 ## Requirements
 
-- Python 3.10+
+- Git
+- Python 3.10+ and `pip`
 - `sqlite3` command-line tool (for initializing the DB)
-- Developed on Windows11
 
 ---
 
 ## 🛠 Installation
 
-Download the code of the main branch
-- and extract it
+Install Git, Python 3.10 or newer, `pip`, and SQLite before continuing.
 
-Install the `flask` library:
+### Windows PowerShell
 
+```powershell
+git clone https://github.com/KirinPoersti/GymBro.git
+cd GymBro
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+sqlite3 database.db ".read schema.sql"
+python app.py
 ```
-pip install flask
-pip install -r requirements.txt
-```
 
-Create the database tables:
+### Linux (Ubuntu/Debian)
 
-```
+```bash
+sudo apt update
+sudo apt install git python3 python3-venv python3-pip sqlite3
+git clone https://github.com/KirinPoersti/GymBro.git
+cd GymBro
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 sqlite3 database.db < schema.sql
+python app.py
 ```
 
-Run the application:
+### macOS
 
-```
-python -m flask run
-```
-Open in Browser:
+Install the prerequisites using their official installers or Homebrew (`brew install git python sqlite`), then run:
 
+```bash
+git clone https://github.com/KirinPoersti/GymBro.git
+cd GymBro
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+sqlite3 database.db < schema.sql
+python app.py
 ```
-http://127.0.0.1:5000
-```
+
+Open http://127.0.0.1:5000 in a browser.
 
 ## 🔍 How to test?
 To verify the goals of submissions, you can verify the following actions like this:
