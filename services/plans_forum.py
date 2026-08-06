@@ -117,6 +117,58 @@ def get_post(pid: int):
     return r
 
 
+def update_post(pid: int, title: str, items: List[Dict]) -> None:
+    ensure_schema()
+    t = (title or "").strip()[:80] or "Untitled plan"
+    norm_items = []
+    cal_t = 0
+    p_t = 0.0
+    c_t = 0.0
+    w_t = 0.0
+    for it in items or []:
+        nm = (it.get("name") or "").strip()
+        w = _num(it.get("weight"), float)
+        p = _num(it.get("protein"), float)
+        c = _num(it.get("carbs"), float)
+        k = _num(it.get("calories"), int)
+        if nm or w or p or c or k:
+            norm_items.append({"name": nm, "weight": w, "protein": p, "carbs": c, "calories": k})
+            w_t += w
+            cal_t += k
+            p_t += p
+            c_t += c
+
+    db.execute(
+        """UPDATE meal_forum_posts
+           SET title=?, items_json=?, calories_total=?, protein_total=?, carbs_total=?, weight_total=?
+           WHERE id=?""",
+        (t, json.dumps(norm_items), cal_t, p_t, c_t, w_t, pid),
+    )
+
+
+def search_posts_unsafe(term: str):
+    ensure_schema()
+    # CSB OWASP 2021 A03 - Injection (VULNERABLE DEMO):
+    # User-controlled search text is formatted directly into SQL.
+    sql = (
+        "SELECT p.id, p.title, p.calories_total, u.username "
+        "FROM meal_forum_posts p JOIN users u ON u.id=p.user_id "
+        f"WHERE p.title LIKE '%{term}%' OR u.username LIKE '%{term}%' "
+        "ORDER BY datetime(p.created_at) DESC"
+    )
+    rows = db.query(sql)
+    # SECURE FIX:
+    # like = f"%{term}%"
+    # rows = db.query(
+    #     "SELECT p.id, p.title, p.calories_total, u.username "
+    #     "FROM meal_forum_posts p JOIN users u ON u.id=p.user_id "
+    #     "WHERE p.title LIKE ? OR u.username LIKE ? "
+    #     "ORDER BY datetime(p.created_at) DESC",
+    #     (like, like),
+    # )
+    return rows
+
+
 def like_post(pid: int, user_id: int) -> Dict:
     """Attempt to like a post. Idempotent: if already liked, returns unchanged count."""
     ensure_schema()

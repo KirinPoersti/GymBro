@@ -258,6 +258,11 @@
           
         </div>
 
+        <form class="pf-search" method="get" action="{{ url_for('plans_forum_bp.plans_forum_search') }}">
+          <input name="q" placeholder="Search shared plans">
+          <button class="btn" type="submit">Search</button>
+        </form>
+
         <div class="pf-list">
           {% set posts = pf_posts or [] %}
           {% set show_all = pf_all %}
@@ -278,6 +283,7 @@
                 <div class="pf-tot">Totals: W {{ (p.weight_total or 0)|round|int }}g &middot; P {{ (p.protein_total or 0)|round|int }}g &middot; C {{ (p.carbs_total or 0)|round|int }}g &middot; {{ (p.calories_total or 0)|round|int }} kcal</div>
                 <div class="pf-actions">
                   {% if p.owned_by_me %}
+                    <a class="pf-edit" title="Edit" aria-label="Edit" href="{{ url_for('plans_forum_bp.plans_edit', pid=p.id) }}">Edit</a>
                     <form method="get" action="{{ url_for('plans_forum_bp.plans_delete', pid=p.id) }}" style="margin-right:8px;">
                       <input type="hidden" name="next" value="{{ url_for('dashboard', y=year, m=month) }}#post-{{ p.id }}">
                       <button class="pf-del" title="Delete" aria-label="Delete">x</button>
@@ -361,6 +367,8 @@
 
   #plans-forum-pill .lb-header { margin-bottom: 6px; }
   .pf-list{ display:flex; flex-direction:column; gap:12px; }
+  .pf-search{ display:flex; gap:8px; margin:0 6px 12px; }
+  .pf-search input{ flex:1; min-width:0; border:1px solid rgba(0,0,0,.12); border-radius:10px; padding:8px 10px; }
   .pf-card{ background:#fff; color:#111; border-radius:16px; padding:12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 10px 20px rgba(0,0,0,.12); }
   .pf-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
   .pf-title{ font-weight:700; }
@@ -375,6 +383,7 @@
   .pf-actions{ margin-top:8px; display:flex; justify-content:flex-end; }
   .pf-like{ border:none; border-radius:999px; padding:6px 10px; cursor:pointer; background:#ffe9f0; box-shadow:0 1px 2px rgba(0,0,0,.08),0 8px 18px rgba(0,0,0,.10); }
   .pf-like[disabled]{ opacity:.6; cursor:default; }
+  .pf-edit{ display:inline-flex; align-items:center; min-height:28px; padding:0 10px; margin-right:8px; border-radius:8px; background:#eef5ff; color:#111; text-decoration:none; font-size:13px; }
   .pf-del{ border:none; border-radius:8px; width:28px; height:28px; cursor:pointer; background:#ffe9e9; color:#111; margin-right:8px; }
   #plans-forum-pill{width: min(760px, 92%); margin: 6px auto; background:#fff; backdrop-filter:none; -webkit-backdrop-filter:none; border:2px solid rgba(0,0,0,0.06); box-shadow:0 6px 14px rgba(0,0,0,.10), 0 18px 36px rgba(0,0,0,.12); border-radius:24px; padding:18px 20px;}  .pf-submit{display:block; width:max-content; margin:12px auto 0;}
 </style>

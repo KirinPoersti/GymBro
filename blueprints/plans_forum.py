@@ -1,10 +1,30 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, abort
 
 from services.auth import login_required
-from services.plans_forum import list_posts, create_post, get_post, like_post
+from services.plans_forum import list_posts, create_post, get_post, update_post, search_posts_unsafe, like_post
 
 
 bp = Blueprint("plans_forum_bp", __name__)
+
+
+def _items_from_form():
+    names = request.form.getlist("item_name[]")
+    weights = request.form.getlist("item_weight[]")
+    proteins = request.form.getlist("item_protein[]")
+    carbs = request.form.getlist("item_carbs[]")
+    calories = request.form.getlist("item_calories[]")
+
+    items = []
+    max_len = max(len(names), len(weights), len(proteins), len(carbs), len(calories)) if any([names, weights, proteins, carbs, calories]) else 0
+    for i in range(max_len):
+        items.append({
+            "name": ((names[i] if i < len(names) else "") or "").strip(),
+            "weight": weights[i] if i < len(weights) else "",
+            "protein": proteins[i] if i < len(proteins) else "",
+            "carbs": carbs[i] if i < len(carbs) else "",
+            "calories": calories[i] if i < len(calories) else "",
+        })
+    return items
 
 
 @bp.route("/plans-forum", methods=["GET"], endpoint="plans_forum")
@@ -35,27 +55,7 @@ def plans_submit_post():
         return jsonify({"ok": True, "id": pid, "url": url_for("dashboard") + f"?ok=1&pf_all=1#post-{pid}"})
 
     title = (request.form.get("title") or "").strip()
-    names = request.form.getlist("item_name[]")
-    weights = request.form.getlist("item_weight[]")
-    proteins = request.form.getlist("item_protein[]")
-    carbs = request.form.getlist("item_carbs[]")
-    calories = request.form.getlist("item_calories[]")
-
-    items = []
-    max_len = max(len(names), len(weights), len(proteins), len(carbs), len(calories)) if any([names, weights, proteins, carbs, calories]) else 0
-    for i in range(max_len):
-        nm = names[i] if i < len(names) else ""
-        w  = weights[i] if i < len(weights) else ""
-        p  = proteins[i] if i < len(proteins) else ""
-        c  = carbs[i] if i < len(carbs) else ""
-        k  = calories[i] if i < len(calories) else ""
-        items.append({
-            "name": (nm or "").strip(),
-            "weight": w,
-            "protein": p,
-            "carbs": c,
-            "calories": k,
-        })
+    items = _items_from_form()
 
     if "add_item" in request.form:
         items.append({"name": "", "weight": "", "protein": "", "carbs": "", "calories": ""})
@@ -84,14 +84,50 @@ def api_plans_forum():
     return jsonify(posts)
 
 
+@bp.get("/api/plans-forum/search", endpoint="api_plans_forum_search")
+def api_plans_forum_search():
+    q = request.args.get("q", "")
+    return jsonify(search_posts_unsafe(q))
+
+
+@bp.get("/plans-forum/search", endpoint="plans_forum_search")
+def plans_forum_search():
+    q = request.args.get("q", "")
+    return render_template("plans_search.html", query=q, results=search_posts_unsafe(q))
+
+
+@bp.route("/plans-forum/<int:pid>/edit", methods=["GET", "POST"], endpoint="plans_edit")
+@login_required
+def plans_edit(pid: int):
+    post = get_post(pid)
+    if not post:
+        abort(404)
+    # CSB OWASP 2021 A01 - Broken Access Control (VULNERABLE DEMO):
+    # No ownership check is performed. A logged-in user can change the URL id and edit another user's plan.
+    # SECURE FIX:
+    # if post["user_id"] != session.get("user_id"):
+    #     abort(403)
+
+    if request.method == "GET":
+        return render_template("plans_submit.html", items=post["items"], title=post["title"], edit_post=post)
+
+    title = (request.form.get("title") or "").strip()
+    items = _items_from_form()
+    update_post(pid, title, items)
+    return redirect(url_for("dashboard") + f"?ok=1&pf_all=1#post-{pid}")
+
+
 @bp.route("/plans-forum/<int:pid>/delete", methods=["GET", "POST"], endpoint="plans_delete")
 @login_required
 def plans_delete(pid: int):
     post = get_post(pid)
     if not post:
         abort(404)
-    if post["user_id"] != session.get("user_id"):
-        abort(403)
+    # CSB OWASP 2021 A01 - Broken Access Control (VULNERABLE DEMO):
+    # No ownership check is performed. A logged-in user can change the URL id and delete another user's plan.
+    # SECURE FIX:
+    # if post["user_id"] != session.get("user_id"):
+    #     abort(403)
 
     if request.method == "GET" and not request.is_json:
         nxt = request.args.get("next") or url_for("plans_forum")

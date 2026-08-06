@@ -1,5 +1,5 @@
 from datetime import timedelta
-from flask import Flask
+from flask import Flask, abort
 from flask_wtf import CSRFProtect
 import config
 
@@ -43,6 +43,16 @@ app.add_url_rule("/settings/username", endpoint="settings_username", view_func=_
 app.add_url_rule("/settings/password", endpoint="settings_password", view_func=_bp_settings_password, methods=["GET", "POST"])
 app.add_url_rule("/settings/delete", endpoint="settings_delete", view_func=_bp_settings_delete, methods=["POST"])
 
+
+@app.route("/debug/crash")
+def debug_crash():
+    # CSB OWASP 2021 A05 - Security Misconfiguration (VULNERABLE DEMO):
+    # Public crash endpoint intentionally exposes debug stack traces when debug mode is enabled.
+    # SECURE FIX:
+    # abort(404)
+    raise RuntimeError("Intentional Cyber Security Base demo crash")
+
+
 @app.after_request
 def no_cache(resp):
     resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
@@ -51,4 +61,8 @@ def no_cache(resp):
     return resp
 
 if __name__ == "__main__":
+    # CSB OWASP 2021 A05 - Security Misconfiguration (VULNERABLE DEMO):
+    # Debug mode must never be exposed outside a local teaching/demo environment.
     app.run(debug=True)
+    # SECURE FIX:
+    # app.run(debug=False)
